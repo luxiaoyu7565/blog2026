@@ -20,7 +20,7 @@
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         article img { max-width: 100%; height: auto; border-radius: 1rem; margin: 1.5rem 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        /* 复利模拟器：防止横线重叠 */
+        /* 保持复利模拟器布局：防止横线重叠 */
         .number-input {
             @apply bg-slate-50 border border-slate-100 rounded-lg text-xs font-semibold text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-400 transition;
             padding: 4px 8px;
@@ -28,7 +28,7 @@
             width: 100%;
         }
 
-        /* 评论卡片：恢复优雅布局 */
+        /* 评论卡片样式 */
         .comment-card {
             @apply bg-white p-5 rounded-2xl border border-slate-100 mb-4 transition-all hover:border-indigo-100 hover:shadow-sm relative;
         }
@@ -37,6 +37,7 @@
             @apply flex justify-between items-start mb-2;
         }
 
+        /* 删除按钮美化 */
         .comment-delete-btn {
             @apply text-slate-300 hover:text-red-500 transition-colors cursor-pointer border-none outline-none bg-transparent flex items-center justify-center p-1 ml-1;
         }
@@ -47,25 +48,24 @@
     <!-- Firebase 权限报错层 -->
     <div id="fatal-error-overlay">
         <div class="bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl text-center modal-enter">
-            <h3 class="text-xl font-bold text-slate-900 mb-4 text-balance">云端连接受阻</h3>
+            <h3 class="text-xl font-bold text-slate-900 mb-4">云端连接受阻</h3>
             <p class="text-slate-600 text-sm mb-6 text-left">请在 Firebase 控制台开启“Anonymous”登录方式以同步数据。</p>
             <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">刷新进入</button>
         </div>
     </div>
 
     <!-- 登录验证弹窗 -->
-    <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 text-left">
         <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter">
-            <h3 class="text-xl font-bold mb-2 text-slate-900 text-center">身份确认</h3>
-            <p class="text-slate-500 text-xs mb-6 text-center" id="auth-hint">请输入管理员暗号进入后台</p>
-            <!-- 修复回车键：使用 Form 包裹并配合 JS 监听 -->
-            <form id="login-form">
-                <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 mb-6" placeholder="暗号..." autocomplete="current-password">
+            <h3 class="text-xl font-bold mb-2 text-slate-900">管理员验证</h3>
+            <p class="text-slate-500 text-xs mb-6" id="auth-hint">请输入管理员暗号进入后台</p>
+            <div class="space-y-6">
+                <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="暗号...">
                 <div class="flex gap-3">
-                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-sm text-balance">确定 (Enter)</button>
-                    <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm text-balance">取消 (Esc)</button>
+                    <button type="button" onclick="window.submitAuth()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-sm">确定</button>
+                    <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm">取消</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -87,9 +87,9 @@
     <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
         <div class="lg:col-span-2 space-y-8">
             <div id="home-view" class="view-content space-y-8">
-                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden">
+                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden text-left">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-[5rem] -z-10 opacity-50"></div>
-                    <h2 id="welcome-title" class="text-4xl font-extrabold mb-4 text-slate-900 tracking-tight text-balance">你好 👋</h2>
+                    <h2 id="welcome-title" class="text-4xl font-extrabold mb-4 text-slate-900 tracking-tight">你好 👋</h2>
                     <p id="welcome-desc" class="text-slate-500 text-lg leading-relaxed mb-8 italic">数据同步中...</p>
                     <div id="welcome-tags" class="flex flex-wrap gap-3"></div>
                 </div>
@@ -118,12 +118,12 @@
                         互动交流
                     </h3>
                     
-                    <div class="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                             <input type="text" id="comment-name" placeholder="您的昵称" class="p-3 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm font-medium">
                         </div>
                         <textarea id="comment-content" rows="3" placeholder="写下你的想法..." class="w-full p-4 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm"></textarea>
-                        <button onclick="window.submitComment()" id="comment-submit-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition text-sm text-balance">
+                        <button onclick="window.submitComment()" id="comment-submit-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition text-sm">
                             发表评论
                         </button>
                     </div>
@@ -137,8 +137,8 @@
             <!-- 管理面板 -->
             <div id="admin-view" class="view-content hidden-view space-y-8 text-left">
                 <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-balance">
-                    <h2 class="text-2xl font-bold text-slate-800 text-left">系统管理后台</h2>
-                    <div class="flex gap-2 text-left">
+                    <h2 class="text-2xl font-bold text-slate-800">系统管理后台</h2>
+                    <div class="flex gap-2">
                         <button onclick="window.logoutAdmin()" class="px-4 py-2 bg-slate-50 text-slate-400 rounded-xl text-sm font-bold border border-slate-100">注销</button>
                         <button onclick="window.openEditor()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-100">+ 发布内容</button>
                     </div>
@@ -163,41 +163,39 @@
 
             <!-- 编辑器 -->
             <div id="editor-view" class="view-content hidden-view space-y-6 text-left">
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-left">
                     <div class="flex justify-between items-center mb-8">
                         <h3 id="editor-title" class="text-2xl font-bold text-slate-800">编辑文章</h3>
                         <div class="relative group cursor-help">
                             <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">💡 排版秘籍</span>
                             <div class="absolute right-0 top-8 w-64 bg-slate-900 text-white text-[10px] p-4 rounded-xl hidden group-hover:block z-50 shadow-2xl leading-relaxed">
-                                <p class="mb-1 text-balance"><b>图片：</b>&lt;img src="链接"&gt;</p>
-                                <p class="mb-1 text-balance"><b>标题：</b>&lt;h2&gt;文字&lt;/h2&gt;</p>
-                                <p class="mb-1 text-balance"><b>加粗：</b>&lt;b&gt;文字&lt;/b&gt;</p>
+                                <p class="mb-1 text-balance text-left"><b>图片：</b>&lt;img src="链接"&gt;</p>
+                                <p class="mb-1 text-balance text-left"><b>标题：</b>&lt;h2&gt;文字&lt;/h2&gt;</p>
+                                <p class="mb-1 text-balance text-left"><b>加粗：</b>&lt;b&gt;文字&lt;/b&gt;</p>
                             </div>
                         </div>
                     </div>
-                    <form id="post-form" onsubmit="event.preventDefault();">
+                    <div class="space-y-4 text-left">
                         <input type="hidden" id="edit-id">
-                        <div class="space-y-4">
-                            <input type="text" id="post-title" placeholder="文章标题" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none text-xl font-bold" required>
-                            <textarea id="post-summary" placeholder="首页摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-bold text-balance" required></textarea>
-                            <textarea id="post-content" placeholder="正文内容" rows="15" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-mono text-sm text-balance" required></textarea>
-                            <div class="flex gap-4 pt-4">
-                                <button type="button" onclick="window.submitPost()" id="post-submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 text-balance">确认同步</button>
-                                <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-balance">取消</button>
-                            </div>
+                        <input type="text" id="post-title" placeholder="文章标题" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none text-xl font-bold" required>
+                        <textarea id="post-summary" placeholder="首页摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-bold text-balance" required></textarea>
+                        <textarea id="post-content" placeholder="正文内容" rows="15" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-mono text-sm" required></textarea>
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" onclick="window.submitPost()" id="post-submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 text-balance">确认同步</button>
+                            <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-balance">取消</button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="space-y-8">
             <!-- 考研倒计时 -->
-            <div class="bg-indigo-600 text-white p-8 rounded-[2rem] shadow-lg relative overflow-hidden shadow-indigo-200">
+            <div class="bg-indigo-600 text-white p-8 rounded-[2rem] shadow-lg relative overflow-hidden shadow-indigo-200 text-left">
                 <h3 class="font-bold mb-4 text-xs uppercase opacity-70 tracking-widest text-indigo-100">考研 2026 倒计时</h3>
                 <div class="text-6xl font-bold mb-6 tabular-nums" id="countdown">...</div>
-                <div class="w-full bg-indigo-500 rounded-full h-2.5 mb-4 shadow-inner text-left">
-                    <div id="progress-bar" class="bg-white h-2.5 rounded-full transition-all duration-1000 shadow-sm"></div>
+                <div class="w-full bg-indigo-500 rounded-full h-2.5 mb-4 shadow-inner">
+                    <div id="progress-bar" class="bg-white h-2.5 rounded-full transition-all duration-1000 shadow-sm text-left"></div>
                 </div>
                 <p class="text-[10px] font-bold opacity-90 text-indigo-50" id="progress-text">目标：2026年12月20日</p>
             </div>
@@ -206,29 +204,29 @@
             <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-center text-left">
                 <h3 class="font-bold text-slate-900 mb-6 flex justify-between items-center text-sm uppercase tracking-tighter text-left">
                     复利模拟器
-                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-bold text-left">V2.2</span>
+                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-bold">V2.2</span>
                 </h3>
                 <div class="canvas-container mb-6 group text-left">
                     <canvas id="compoundCanvas"></canvas>
                     <div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 border border-white/10 whitespace-nowrap min-w-[140px] text-left"></div>
                 </div>
-                <div class="space-y-5">
-                    <div class="grid grid-cols-2 gap-x-2">
+                <div class="space-y-5 text-left">
+                    <div class="grid grid-cols-2 gap-x-2 text-left">
                         <div class="flex flex-col items-start text-left">
                             <label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">本金</label>
-                            <input type="number" id="inputPrincipal" value="10000" class="number-input">
+                            <input type="number" id="inputPrincipal" value="10000" class="number-input text-left">
                         </div>
                         <div class="flex flex-col items-start text-left">
                             <label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">定投</label>
-                            <input type="number" id="inputMonthly" value="2000" class="number-input">
+                            <input type="number" id="inputMonthly" value="2000" class="number-input text-left">
                         </div>
                     </div>
                     <div class="space-y-2 text-left">
-                        <div class="flex justify-between text-[11px] font-bold text-left"><span>年限</span><span class="text-indigo-600 font-mono text-left"><span id="yearsVal">20</span> 年</span></div>
+                        <div class="flex justify-between text-[11px] font-bold"><span>年限</span><span class="text-indigo-600 font-mono text-left"><span id="yearsVal">20</span> 年</span></div>
                         <input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer">
                     </div>
                     <div class="space-y-2 text-left">
-                        <div class="flex justify-between text-[11px] font-bold text-left"><span>预期收益</span><span class="text-indigo-600 font-mono text-left"><span id="rateVal">8</span>%</span></div>
+                        <div class="flex justify-between text-[11px] font-bold"><span>预期收益</span><span class="text-indigo-600 font-mono text-left"><span id="rateVal">8</span>%</span></div>
                         <input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer">
                     </div>
                 </div>
@@ -243,11 +241,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 核心配置 ---
         const ADMIN_MASK = "WFlGeHlmMTIzNDU2QA=="; // XYFxyf123456@
-        const PERSIST_KEY = "luxiaoyu_auth_token_v9"; // 升级版本号确保策略生效
+        const PERSIST_KEY = "luxiaoyu_auth_token_v10"; 
         const MAX_ATTEMPTS = 5;
         const LOCKOUT_MS = 5 * 60 * 1000;
 
@@ -280,49 +278,19 @@
         let securityRecord = null;
         let chartData = [];
 
-        // --- 1. 登录与回车键逻辑修复 (最稳妥的方案) ---
-        window.submitAuth = async (e) => {
-            if (e && e.preventDefault) e.preventDefault();
-            
-            const inputEl = document.getElementById('admin-password-input');
-            if(!inputEl) return;
-            const input = inputEl.value;
-            const now = Date.now();
-
-            // 验证前检查锁定
-            await syncSecurityRecord();
-            if (securityRecord && securityRecord.lockoutUntil > now) {
-                const left = Math.ceil((securityRecord.lockoutUntil - now) / 60000);
-                alert(`系统锁定中，请在 ${left} 分钟后再试。`);
-                return;
-            }
-
-            if (btoa(input) === ADMIN_MASK) { 
-                isAdminAuthenticated = true; 
-                localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
-                await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
-                window.closeAuthModal(); 
-                window.showView('admin'); 
-                renderComments(); 
-            } else {
-                let attempts = (securityRecord ? securityRecord.failedAttempts : 0) + 1;
-                let lockoutTime = 0;
-                
-                if (attempts >= MAX_ATTEMPTS) {
-                    lockoutTime = now + LOCKOUT_MS;
-                    alert("输错5次！该设备已被云端锁定 5 分钟。");
-                    window.closeAuthModal();
-                } else {
-                    alert(`暗号错误！还剩 ${MAX_ATTEMPTS - attempts} 次尝试机会。`);
-                }
-                
-                // 写入云端防刷新
-                await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
-                await syncSecurityRecord();
-            }
+        // --- 1. 窗口关闭与键盘监听 (Esc) ---
+        window.closeAuthModal = () => {
+            const modal = document.getElementById('auth-modal');
+            if (modal) modal.classList.add('hidden');
+            const input = document.getElementById('admin-password-input');
+            if (input) input.value = "";
         };
 
-        // --- 2. 路由系统 ---
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') window.closeAuthModal();
+        });
+
+        // --- 2. 路由系统：刷新不回主页 ---
         window.showView = (v, id = null) => {
             let hash = `#/${v}`;
             if (id) hash += `/${id}`;
@@ -359,54 +327,48 @@
 
         window.addEventListener('hashchange', updateUIFromHash);
 
-        // --- 3. 初始化与生命周期 ---
-        onAuthStateChanged(auth, async (u) => {
-            user = u;
-            if (user) {
-                startDataListener();
-                startSettingsListener();
-                startCommentsListener();
+        // --- 3. 登录逻辑 (移除回车监听，强化锁定逻辑) ---
+        window.submitAuth = async () => {
+            const inputEl = document.getElementById('admin-password-input');
+            if(!inputEl) return;
+            const input = inputEl.value;
+            const now = Date.now();
+
+            // 强制重新从云端同步一次记录，防刷
+            await syncSecurityRecord();
+            if (securityRecord && securityRecord.lockoutUntil > now) {
+                const left = Math.ceil((securityRecord.lockoutUntil - now) / 60000);
+                alert(`系统锁定中，请在 ${left} 分钟后再试。`);
+                return;
+            }
+
+            if (btoa(input) === ADMIN_MASK) { 
+                isAdminAuthenticated = true; 
+                localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
+                // 登录成功重置
+                await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
+                window.closeAuthModal(); 
+                window.showView('admin'); 
+                renderComments(); 
+            } else {
+                let attempts = (securityRecord ? securityRecord.failedAttempts : 0) + 1;
+                let lockoutTime = 0;
+                
+                if (attempts >= MAX_ATTEMPTS) {
+                    lockoutTime = now + LOCKOUT_MS;
+                    alert("错误次数超限！该设备已锁定 5 分钟。");
+                    window.closeAuthModal();
+                } else {
+                    alert(`暗号错误！还剩 ${MAX_ATTEMPTS - attempts} 次机会。`);
+                }
+                
+                // 将锁定结果存回云端
+                await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
                 await syncSecurityRecord();
-                applyPersistentAuth();
             }
-        });
+        };
 
-        async function syncSecurityRecord() {
-            if (!user) return;
-            try {
-                const snapshot = await getDocs(securityCol);
-                securityRecord = snapshot.docs.map(d => ({id: d.id, ...d.data()})).find(d => d.id === user.uid);
-            } catch (e) {}
-        }
-
-        (async () => {
-            try { await signInAnonymously(auth); } catch (e) {
-                if (e.code === 'auth/admin-restricted-operation') document.getElementById('fatal-error-overlay').style.display = 'flex';
-            }
-        })();
-
-        // 窗口加载后绑定所有关键监听器 (解决回车键失效的核心)
-        window.addEventListener('load', () => {
-            const form = document.getElementById('login-form');
-            const input = document.getElementById('admin-password-input');
-            
-            if (form) form.addEventListener('submit', window.submitAuth);
-            if (input) {
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        window.submitAuth();
-                    }
-                });
-            }
-            if (location.hash) updateUIFromHash();
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') window.closeAuthModal();
-        });
-
-        // --- 4. 辅助函数 ---
+        // --- 4. Firebase 初始化与生命周期 ---
         function applyPersistentAuth() {
             if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) {
                 isAdminAuthenticated = true;
@@ -428,21 +390,38 @@
             }
         };
 
-        window.closeAuthModal = () => {
-            const modal = document.getElementById('auth-modal');
-            if(modal) modal.classList.add('hidden');
-            const input = document.getElementById('admin-password-input');
-            if(input) input.value = "";
-        };
+        onAuthStateChanged(auth, async (u) => {
+            user = u;
+            if (user) {
+                startDataListener();
+                startSettingsListener();
+                startCommentsListener();
+                await syncSecurityRecord();
+                applyPersistentAuth();
+            }
+        });
 
-        window.logoutAdmin = () => {
-            localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false;
-            document.getElementById('nav-admin-link').classList.add('hidden');
-            window.showView('home');
-            renderComments();
-        };
+        // 更加稳健的记录同步逻辑
+        async function syncSecurityRecord() {
+            if (!user) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'security', user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    securityRecord = docSnap.data();
+                } else {
+                    securityRecord = { failedAttempts: 0, lockoutUntil: 0 };
+                }
+            } catch (e) { console.error("Security Sync Failed:", e); }
+        }
 
-        // --- 5. 评论系统 (右上角排版) ---
+        (async () => {
+            try { await signInAnonymously(auth); } catch (e) {
+                if (e.code === 'auth/admin-restricted-operation') document.getElementById('fatal-error-overlay').style.display = 'flex';
+            }
+        })();
+
+        // --- 5. 评论系统 (排版恢复右上角且含年份) ---
         function startCommentsListener() {
             onSnapshot(commentsCol, s => {
                 comments = s.docs.map(d => ({id: d.id, ...d.data()}));
@@ -461,7 +440,7 @@
             const listEl = document.getElementById('comments-list');
             if (!listEl) return;
             const filtered = comments.filter(c => c.articleId === currentArticleId).sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis());
-            if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-400 text-center py-4 italic text-sm">还没有评论。</p>'; return; }
+            if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-400 text-center py-4 italic text-sm">暂无评论。</p>'; return; }
             
             listEl.innerHTML = filtered.map(c => {
                 const canDelete = isAdminAuthenticated || (user && c.uid === user.uid);
@@ -491,7 +470,7 @@
         window.submitComment = async () => {
             const name = document.getElementById('comment-name').value.trim();
             const content = document.getElementById('comment-content').value.trim();
-            if (!content) return alert("写点什么吧");
+            if (!content) return alert("写点内容吧");
             const btn = document.getElementById('comment-submit-btn');
             btn.disabled = true;
             try {
@@ -500,16 +479,15 @@
             } finally { btn.disabled = false; }
         };
 
-        // --- 6. 同步配置 ---
+        // --- 6. 其他配置同步逻辑 ---
         function startSettingsListener() {
             onSnapshot(settingsDoc, s => {
                 const d = s.exists() ? s.data() : {};
                 document.getElementById('nav-site-title').innerText = d.siteTitle || 'STRIVE 2026';
-                const tEl = document.getElementById('welcome-title'); if(tEl) tEl.innerText = d.welcomeTitle || '你好 👋';
-                const dEl = document.getElementById('welcome-desc'); if(dEl) dEl.innerText = d.welcomeDesc || '';
-                const t1 = d.tag1 || '# 考研'; const t2 = d.tag2 || '# 奋斗';
+                const wt = document.getElementById('welcome-title'); if(wt) wt.innerText = d.welcomeTitle || '你好 👋';
+                const wd = document.getElementById('welcome-desc'); if(wd) wd.innerText = d.welcomeDesc || '';
                 const tagsEl = document.getElementById('welcome-tags');
-                if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${t1}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${t2}</span>`;
+                if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${d.tag1 || '# 考研'}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${d.tag2 || '# 奋斗'}</span>`;
                 ['site-title', 'welcome-title', 'welcome-desc', 'contact-link', 'tag1', 'tag2'].forEach(id => {
                     const el = document.getElementById('set-' + id); if(el) el.value = d[id] || '';
                 });
@@ -534,14 +512,18 @@
         function startDataListener() {
             onSnapshot(articlesCol, s => {
                 articles = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date?.replace(/\./g,'-')) - new Date(a.date?.replace(/\./g,'-')));
-                document.getElementById('article-list').innerHTML = articles.map(a => `<div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer relative overflow-hidden text-left"><h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors text-balance">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed">${a.summary}</p><div class="text-indigo-600 mt-6 text-xs font-bold uppercase tracking-widest flex items-center text-balance font-bold">READ FULL STORY →</div></div>`).join('');
+                document.getElementById('article-list').innerHTML = articles.map(a => `<div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer relative overflow-hidden text-left"><h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors text-balance">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed">${a.summary}</p><div class="text-indigo-600 mt-6 text-xs font-bold uppercase tracking-widest flex items-center text-balance text-indigo-600 font-bold">READ FULL STORY →</div></div>`).join('');
                 document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400 text-left">博文管理 (${articles.length})</div>` + articles.map(a => `<div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition"><span class="font-bold text-slate-700 text-sm truncate mr-4">${a.title}</span><div class="space-x-4 flex-shrink-0 text-left"><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs">删除</button></div></div>`).join('');
                 if (location.hash.includes('article')) updateUIFromHash();
             });
         }
 
         window.openEditor = (id = null) => {
-            const form = document.getElementById('post-form'); if(form) form.reset();
+            const form = document.getElementById('post-form'); if(form) {
+                document.getElementById('post-title').value = "";
+                document.getElementById('post-summary').value = "";
+                document.getElementById('post-content').value = "";
+            }
             if(id){
                 const a = articles.find(x => x.id === id);
                 document.getElementById('edit-id').value = a.id;
@@ -565,7 +547,7 @@
 
         window.deletePost = id => { if(confirm("确定删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
-        // --- 7. 模拟器逻辑 ---
+        // --- 7. 复利模拟器逻辑 ---
         const cvs = document.getElementById('compoundCanvas'), cx = cvs.getContext('2d'), tooltip = document.getElementById('chart-tooltip');
         function renderChart() {
             if (!cvs) return;
@@ -635,14 +617,13 @@
             const tEl = document.getElementById('progress-text'); if(tEl) tEl.innerText = `已完成 2026 奋斗进度的 ${pct.toFixed(1)}%`;
         }, 1000);
 
-        function formatURL(url) {
-            if(!url) return '#';
-            let formatted = url.trim();
-            if(!formatted.startsWith('http')) formatted = 'https://' + formatted;
-            return formatted;
-        }
-
-        renderChart(); window.onresize = renderChart;
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            if (location.hash) updateUIFromHash();
+            renderChart();
+        });
+        window.onresize = renderChart;
+        window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; document.getElementById('nav-admin-link').classList.add('hidden'); window.showView('home'); renderComments(); };
     </script>
 </body>
 </html>
