@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的数字空间 | 奋斗在 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            scroll-behavior: smooth;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+        input[type=range] { accent-color: #4f46e5; }
+        .view-content { transition: opacity 0.3s ease-in-out; }
+        .hidden-view { display: none; opacity: 0; }
+        
+        #fatal-error-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-enter { animation: modalIn 0.3s ease-out; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .number-input {
+            @apply w-full p-2 bg-slate-50 border border-slate-100 rounded-lg text-sm font-semibold text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-400 transition;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- 数据库权限引导层 -->
+    <div id="fatal-error-overlay">
+        <div class="bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl text-center modal-enter">
+            <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-4">连接成功但尚未授权</h3>
+            <p class="text-slate-600 text-sm mb-6 leading-relaxed text-left">
+                小雨，你的配置已正确，但 Firebase 后台需要你手动点一下“匿名登录”开关：<br><br>
+                1. 在 Firebase 控制台左侧点 <b>Authentication</b><br>
+                2. 点 <b>Sign-in method</b> 标签页<br>
+                3. 点击 <b>Add new provider</b> 按钮<br>
+                4. 选择 <b>Anonymous (匿名)</b>，点开启并保存。
+            </p>
+            <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">我已开启，刷新进入</button>
+        </div>
+    </div>
+
+    <!-- 管理员验证模态框 - 使用本地兼容的掩码验证 -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter">
+            <h3 class="text-xl font-bold mb-2 text-slate-900">管理中心</h3>
+            <p class="text-slate-500 text-sm mb-6">请输入您的管理员暗号。</p>
+            <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 mb-6" placeholder="输入暗号...">
+            <div class="flex gap-3">
+                <button onclick="window.submitAuth()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">进入后台</button>
+                <button onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认 -->
+    <div id="confirm-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter text-center">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2">确定删除？</h3>
+            <div class="flex gap-3 mt-6">
+                <button id="confirm-delete-btn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">确认</button>
+                <button onclick="window.closeConfirmModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 z-50 glass-card py-4 px-6 mb-8 shadow-sm">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 onclick="window.showView('home')" id="nav-site-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent cursor-pointer text-balance">STRIVE 2026</h1>
+            <div class="space-x-6 text-sm font-medium flex items-center">
+                <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition">首页</a>
+                <a href="javascript:void(0)" onclick="window.checkAdminAuth()" class="text-slate-500 hover:text-indigo-600 transition flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    管理中心
+                </a>
+                <a id="nav-contact-btn" href="#" target="_blank" class="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition">联系我</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
+        <div class="lg:col-span-2 space-y-8">
+            <!-- 视图：主页 -->
+            <div id="home-view" class="view-content space-y-8">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                    <h2 id="welcome-title" class="text-3xl font-bold mb-4 text-slate-900 tracking-tight">你好 👋</h2>
+                    <p id="welcome-desc" class="text-slate-600 leading-relaxed mb-6 italic">正在同步云端介绍...</p>
+                    <div class="flex gap-4">
+                        <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-full"># 考研 2026</span>
+                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-semibold rounded-full"># 坚持不懈</span>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <h3 class="text-xl font-bold flex justify-between items-center text-slate-900">
+                        <span class="flex items-center gap-2"><span class="w-2 h-6 bg-indigo-600 rounded-full"></span>最新文章</span>
+                        <div id="loading-spinner" class="hidden"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div></div>
+                    </h3>
+                    <div id="article-list" class="space-y-6">
+                        <p class="text-slate-400 text-center py-20 italic">同步数据中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视图：详情 -->
+            <div id="article-view" class="view-content hidden-view space-y-6">
+                <button onclick="window.showView('home')" class="text-sm font-medium text-slate-500 hover:text-indigo-600">← 返回列表</button>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                    <div id="article-detail-content"></div>
+                </div>
+            </div>
+
+            <!-- 视图：管理 -->
+            <div id="admin-view" class="view-content hidden-view space-y-8">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">管理后台</h2>
+                    <div class="space-x-2">
+                        <button onclick="window.logoutAdmin()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold">退出</button>
+                        <button onclick="window.openEditor()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">+ 发布内容</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="font-bold">全局设置</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="set-site-title" placeholder="Logo 文字" class="p-3 bg-slate-50 rounded-xl outline-none border border-transparent focus:border-indigo-200">
+                        <input type="text" id="set-contact-link" placeholder="联系链接 (http...)" class="p-3 bg-slate-50 rounded-xl outline-none border border-transparent focus:border-indigo-200">
+                    </div>
+                    <input type="text" id="set-welcome-title" placeholder="主页大标题" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
+                    <textarea id="set-welcome-desc" placeholder="介绍正文" rows="2" class="w-full p-3 bg-slate-50 rounded-xl outline-none"></textarea>
+                    <button onclick="window.saveSettings()" id="settings-save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl">保存配置</button>
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden" id="admin-table-body"></div>
+            </div>
+
+            <!-- 视图：编辑器 -->
+            <div id="editor-view" class="view-content hidden-view space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                    <h3 id="editor-title" class="text-xl font-bold mb-6 text-indigo-600">内容创作</h3>
+                    <form id="post-form" class="space-y-4">
+                        <input type="hidden" id="edit-id">
+                        <input type="text" id="post-title" placeholder="标题" class="w-full p-4 bg-slate-50 rounded-xl outline-none" required>
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="post-category" class="p-4 bg-slate-50 rounded-xl outline-none">
+                                <option value="考研笔记">考研笔记</option>
+                                <option value="投资周报">投资周报</option>
+                                <option value="生活随笔">生活随笔</option>
+                            </select>
+                            <input type="text" id="post-date" class="p-4 bg-slate-100 rounded-xl outline-none" readonly>
+                        </div>
+                        <textarea id="post-summary" placeholder="展示摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-xl outline-none" required></textarea>
+                        <textarea id="post-content" placeholder="正文 (支持 HTML)" rows="12" class="w-full p-4 bg-slate-50 rounded-xl outline-none font-mono text-sm" required></textarea>
+                        <div class="flex gap-4">
+                            <button type="submit" id="submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">同步到云端</button>
+                            <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold">返回</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 侧边栏 -->
+        <div class="space-y-8">
+            <div class="bg-indigo-600 text-white p-8 rounded-3xl shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500 rounded-full opacity-50"></div>
+                <h3 class="font-bold mb-4 relative z-10 uppercase tracking-widest text-xs">考研倒计时</h3>
+                <div class="text-5xl font-bold mb-4 tabular-nums relative z-10" id="countdown">...</div>
+                <div class="w-full bg-indigo-500 rounded-full h-2 mb-4">
+                    <div id="progress-bar" class="bg-white h-2 rounded-full transition-all duration-1000"></div>
+                </div>
+                <p class="text-xs text-indigo-100 relative z-10" id="progress-text">目标：2026年12月20日</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <h3 class="font-bold text-slate-900 mb-6">财富复利模拟器</h3>
+                <div class="canvas-container mb-6 group">
+                    <canvas id="compoundCanvas"></canvas>
+                    <div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 whitespace-nowrap min-w-[150px] border border-white/10"></div>
+                </div>
+                <div class="space-y-5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-[10px] text-slate-400 mb-1">初始本金</label><input type="number" id="inputPrincipal" value="10000" class="number-input"></div>
+                        <div><label class="block text-[10px] text-slate-400 mb-1">每月定投</label><input type="number" id="inputMonthly" value="2000" class="number-input"></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold mb-2"><span>投资年限</span><span class="text-indigo-600"><span id="yearsVal">20</span> 年</span></div>
+                        <input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold mb-2"><span>预期年化</span><span class="text-indigo-600"><span id="rateVal">8</span>%</span></div>
+                        <input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-slate-50">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center"><div class="text-[10px] text-slate-400 mb-1">本金总额</div><div id="totalInvested" class="text-sm font-bold">¥ 0</div></div>
+                        <div class="text-center"><div class="text-[10px] text-slate-400 mb-1">累计收益</div><div id="totalInterest" class="text-sm font-bold text-emerald-600">¥ 0</div></div>
+                    </div>
+                    <div class="text-center bg-indigo-50/50 py-4 rounded-2xl border border-indigo-100/50">
+                        <div class="text-xs text-indigo-400 mb-1">最终资产</div>
+                        <div class="text-2xl font-bold text-indigo-600 tracking-tight" id="finalWealth">...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 核心暗号验证（兼容本地 file:/// 环境） ---
+        // 我们给暗号加一个“面具”，让它在代码里不直接显示 2026。
+        // 暗号依然是 2026
+        const ADMIN_MASK = "MjAyNg=="; 
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU",
+            authDomain: "blog-6dd2d.firebaseapp.com",
+            projectId: "blog-6dd2d",
+            storageBucket: "blog-6dd2d.firebasestorage.app",
+            messagingSenderId: "232992420063",
+            appId: "1:232992420063:web:4afa71559dbf14ed47f96a",
+            measurementId: "G-JV2BY25CFH"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'blog-6dd2d'; 
+        
+        const articlesCol = collection(db, 'artifacts', appId, 'public', 'data', 'articles');
+        const settingsDoc = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
+
+        let isAdminAuthenticated = false;
+        let articles = [];
+        let user = null;
+
+        // --- AUTH ---
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (user) {
+                console.log("云端认证成功");
+                startDataListener();
+                startSettingsListener();
+            }
+        });
+
+        (async () => {
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                if (err.code === 'auth/admin-restricted-operation' || err.code === 'auth/operation-not-allowed') {
+                    document.getElementById('fatal-error-overlay').style.display = 'flex';
+                }
+            }
+        })();
+
+        // --- 核心验证逻辑修复 ---
+        window.checkAdminAuth = () => isAdminAuthenticated ? window.showView('admin') : document.getElementById('auth-modal').classList.remove('hidden');
+        window.closeAuthModal = () => document.getElementById('auth-modal').classList.add('hidden');
+        
+        // 这一部分修改为不依赖 SubtleCrypto 的方式，确保本地打开也有效
+        window.submitAuth = () => {
+            const input = document.getElementById('admin-password-input').value;
+            // 通过简单的掩码比对来验证暗号
+            if (btoa(input) === ADMIN_MASK) { 
+                isAdminAuthenticated = true; 
+                window.closeAuthModal(); 
+                window.showView('admin'); 
+            } else {
+                alert("暗号错误。");
+            }
+        };
+
+        window.logoutAdmin = () => { isAdminAuthenticated = false; window.showView('home'); };
+
+        // --- 视图切换 ---
+        window.showView = (v, id = null) => {
+            ['home-view', 'article-view', 'admin-view', 'editor-view'].forEach(x => document.getElementById(x).classList.add('hidden-view'));
+            document.getElementById(v + '-view').classList.remove('hidden-view');
+            if (v === 'article') {
+                const a = articles.find(x => x.id === id);
+                if (a) {
+                    document.getElementById('article-detail-content').innerHTML = `
+                        <h1 class="text-4xl font-extrabold mb-6 text-slate-900 tracking-tight">${a.title}</h1>
+                        <div class="flex items-center gap-3 text-sm mb-8"><span class="px-3 py-1 bg-indigo-50 text-indigo-600 font-bold rounded-lg">${a.category}</span><span class="text-slate-400">📅 ${a.date}</span></div>
+                        <div class="prose prose-indigo max-w-none text-slate-600 leading-relaxed text-lg">${a.content}</div>`;
+                }
+            }
+            window.scrollTo(0, 0);
+        };
+
+        // --- 实时同步 ---
+        function startDataListener() {
+            onSnapshot(articlesCol, s => {
+                articles = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date.replace(/\./g,'-')) - new Date(a.date.replace(/\./g,'-')));
+                const listEl = document.getElementById('article-list');
+                if (articles.length === 0) {
+                    listEl.innerHTML = '<p class="text-slate-400 text-center py-20 italic">尚未发布文章，进入管理中心写下你的第一篇吧！</p>';
+                } else {
+                    listEl.innerHTML = articles.map(a => `
+                        <div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-3xl border border-slate-100 hover:border-indigo-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
+                            <div class="flex justify-between mb-4"><span class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase">${a.category}</span><span class="text-xs text-slate-300">${a.date}</span></div>
+                            <h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors">${a.title}</h4>
+                            <p class="text-slate-500 text-sm mb-4 line-clamp-2">${a.summary}</p>
+                            <div class="text-indigo-600 text-xs font-bold tracking-widest">READ MORE →</div>
+                        </div>`).join('');
+                }
+                document.getElementById('admin-table-body').innerHTML = `<div class="p-6 border-b border-slate-50 font-bold text-slate-800">全部文章</div>` + articles.map(a => `
+                    <div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition">
+                        <span class="font-bold text-slate-700">${a.title}</span>
+                        <div class="space-x-4"><button onclick="window.openEditor('${a.id}')" class="text-indigo-600">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500">删除</button></div>
+                    </div>`).join('');
+            });
+        }
+
+        function startSettingsListener() {
+            onSnapshot(settingsDoc, s => {
+                if(s.exists()){
+                    const d = s.data();
+                    document.getElementById('nav-site-title').innerText = d.siteTitle || 'STRIVE 2026';
+                    document.getElementById('welcome-title').innerText = d.welcomeTitle || '你好 👋';
+                    document.getElementById('welcome-desc').innerText = d.welcomeDesc || '正在同步云端介绍...';
+                    document.getElementById('nav-contact-btn').href = d.contactLink || '#';
+                    document.getElementById('set-site-title').value = d.siteTitle || '';
+                    document.getElementById('set-welcome-title').value = d.welcomeTitle || '';
+                    document.getElementById('set-welcome-desc').value = d.welcomeDesc || '';
+                    document.getElementById('set-contact-link').value = d.contactLink || '';
+                }
+            });
+        }
+
+        window.saveSettings = async () => {
+            const btn = document.getElementById('settings-save-btn');
+            btn.disabled = true; btn.innerText = "正在同步...";
+            try {
+                await setDoc(settingsDoc, {
+                    siteTitle: document.getElementById('set-site-title').value,
+                    welcomeTitle: document.getElementById('set-welcome-title').value,
+                    welcomeDesc: document.getElementById('set-welcome-desc').value,
+                    contactLink: document.getElementById('set-contact-link').value
+                });
+                alert("站点配置已生效！");
+            } catch(e) { alert("云端同步失败，请检查数据库权限。"); }
+            btn.disabled = false; btn.innerText = "同步设置到云端";
+        };
+
+        window.openEditor = (id = null) => {
+            document.getElementById('post-form').reset();
+            document.getElementById('post-date').value = new Date().toLocaleDateString('zh-CN').replace(/\//g,'.');
+            if(id){
+                const a = articles.find(x => x.id === id);
+                document.getElementById('edit-id').value = a.id;
+                document.getElementById('post-title').value = a.title;
+                document.getElementById('post-category').value = a.category;
+                document.getElementById('post-summary').value = a.summary;
+                document.getElementById('post-content').value = a.content;
+            } else document.getElementById('edit-id').value = "";
+            window.showView('editor');
+        };
+
+        document.getElementById('post-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn'); btn.disabled = true;
+            const id = document.getElementById('edit-id').value;
+            const data = { title: document.getElementById('post-title').value, category: document.getElementById('post-category').value, date: document.getElementById('post-date').value, summary: document.getElementById('post-summary').value, content: document.getElementById('post-content').value, updatedAt: Timestamp.now() };
+            try {
+                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id), data);
+                else await addDoc(articlesCol, data);
+                window.showView('admin');
+            } catch (err) { alert("同步失败！请确认已开启 Firestore 匿名访问。"); }
+            btn.disabled = false;
+        };
+
+        window.deletePost = id => {
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('confirm-delete-btn').onclick = async () => {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id));
+                document.getElementById('confirm-modal').classList.add('hidden');
+            };
+        };
+
+        window.closeConfirmModal = () => document.getElementById('confirm-modal').classList.add('hidden');
+
+        // --- SIMULATOR ---
+        const cvs = document.getElementById('compoundCanvas'), cx = cvs.getContext('2d'), tooltip = document.getElementById('chart-tooltip');
+        let chartData = [];
+
+        function renderChart() {
+            const w = cvs.width = cvs.parentElement.clientWidth, h = cvs.height = cvs.parentElement.clientHeight;
+            const p = parseFloat(document.getElementById('inputPrincipal').value) || 0;
+            const m = parseFloat(document.getElementById('inputMonthly').value) || 0;
+            const yrs = parseInt(document.getElementById('yearsInput').value), r = parseInt(document.getElementById('rateInput').value) / 100;
+            
+            let currentWealth = p;
+            chartData = [{year: 0, principal: p, wealth: p, interest: 0}];
+            for(let i = 1; i <= yrs; i++) {
+                currentWealth = currentWealth * (1 + r) + (m * 12);
+                let invested = p + (m * 12 * i);
+                chartData.push({ year: i, principal: invested, wealth: currentWealth, interest: Math.max(0, currentWealth - invested) });
+            }
+
+            const maxVal = chartData[chartData.length-1].wealth;
+            document.getElementById('finalWealth').innerText = `¥${Math.round(maxVal).toLocaleString()}`;
+            document.getElementById('totalInvested').innerText = `¥${Math.round(chartData[chartData.length-1].principal).toLocaleString()}`;
+            document.getElementById('totalInterest').innerText = `¥${Math.round(chartData[chartData.length-1].interest).toLocaleString()}`;
+
+            cx.clearRect(0, 0, w, h);
+            cx.strokeStyle = '#f1f5f9'; cx.lineWidth = 1; cx.setLineDash([5, 5]);
+            for(let i=1; i<5; i++) { cx.beginPath(); cx.moveTo(0, h-(i*h/5)); cx.lineTo(w, h-(i*h/5)); cx.stroke(); }
+            cx.setLineDash([]);
+
+            cx.beginPath(); cx.moveTo(0, h);
+            chartData.forEach(d => cx.lineTo((d.year/yrs)*w, h - (d.principal/maxVal)*(h-60)-30));
+            cx.lineTo(w, h); cx.fillStyle = '#4f46e5'; cx.globalAlpha = 0.8; cx.fill();
+
+            cx.beginPath(); cx.moveTo(0, h);
+            chartData.forEach(d => cx.lineTo((d.year/yrs)*w, h - (d.wealth/maxVal)*(h-60)-30));
+            for(let i=chartData.length-1; i>=0; i--){
+                const d = chartData[i];
+                cx.lineTo((d.year/yrs)*w, h - (d.principal/maxVal)*(h-60)-30);
+            }
+            cx.fillStyle = '#10b981'; cx.globalAlpha = 0.4; cx.fill();
+            cx.globalAlpha = 1.0;
+
+            cx.beginPath(); cx.strokeStyle = '#4f46e5'; cx.lineWidth = 3;
+            chartData.forEach((d, i) => {
+                const x = (d.year/yrs)*w, y = h - (d.wealth/maxVal)*(h-60)-30;
+                if(i===0) cx.moveTo(x,y); else cx.lineTo(x,y);
+            });
+            cx.stroke();
+        }
+
+        cvs.onmousemove = e => {
+            const rect = cvs.getBoundingClientRect(), x = e.clientX - rect.left, yrs = parseInt(document.getElementById('yearsInput').value);
+            const yr = Math.round((x / cvs.width) * yrs);
+            const d = chartData.find(p => p.year === yr);
+            if(d) {
+                const max = chartData[chartData.length-1].wealth;
+                const px = (d.year/yrs)*cvs.width, py = cvs.height - (d.wealth/max)*(cvs.height-60)-30;
+                let leftPos = px + 15;
+                if (leftPos + 160 > cvs.width) leftPos = px - 170;
+                tooltip.classList.remove('hidden'); tooltip.style.left = leftPos + 'px'; tooltip.style.top = (py - 80) + 'px';
+                tooltip.innerHTML = `<div class="font-bold border-b border-white/20 pb-1 mb-2">第 ${d.year} 年预期</div>
+                    <div class="flex justify-between gap-4"><span>累计投入:</span><span>¥${Math.round(d.principal).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-4 text-emerald-300"><span>累计收益:</span><span>¥${Math.round(d.interest).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-4 mt-1 pt-1 border-t border-white/10 font-bold text-indigo-300"><span>总资产:</span><span>¥${Math.round(d.wealth).toLocaleString()}</span></div>`;
+                renderChart(); cx.beginPath(); cx.strokeStyle='#4f46e5'; cx.arc(px,py,5,0,Math.PI*2); cx.stroke(); cx.fillStyle='white'; cx.fill();
+            }
+        };
+        cvs.onmouseleave = () => { tooltip.classList.add('hidden'); renderChart(); };
+
+        ['yearsInput', 'rateInput', 'inputPrincipal', 'inputMonthly'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.oninput = e => {
+                    const valEl = document.getElementById(id.replace('Input','Val'));
+                    if(valEl) valEl.innerText = e.target.value;
+                    renderChart();
+                };
+            }
+        });
+
+        // --- COUNTDOWN ---
+        setInterval(() => {
+            const tgt = new Date('2026-12-20'), start = new Date('2026-01-01'), now = new Date();
+            const days = Math.ceil((tgt-now)/86400000);
+            const pct = Math.min(100, Math.max(0, ((now-start)/(tgt-start))*100));
+            document.getElementById('countdown').innerText = days + ' 天';
+            const pb = document.getElementById('progress-bar');
+            if (pb) pb.style.width = pct + '%';
+            const pt = document.getElementById('progress-text');
+            if (pt) pt.innerText = `已完成 2026 年度计划进度的 ${pct.toFixed(1)}%`;
+        }, 1000);
+
+        renderChart();
+        window.onresize = renderChart;
+    </script>
+</body>
+</html>
