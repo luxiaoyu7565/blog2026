@@ -57,7 +57,7 @@
             </div>
             <h3 class="text-xl font-bold text-slate-900 mb-4">连接成功但尚未授权</h3>
             <p class="text-slate-600 text-sm mb-6 leading-relaxed text-left">
-                Firebase 后台需要你手动开启“匿名登录”：<br><br>
+                Firebase 后台需要您手动开启“匿名登录”：<br><br>
                 1. 在 Firebase 控制台左侧点 <b>Authentication</b><br>
                 2. 点 <b>Sign-in method</b> 标签页<br>
                 3. 点击 <b>Add new provider</b> 按钮<br>
@@ -67,14 +67,14 @@
         </div>
     </div>
 
-    <!-- 管理员验证模态框 - 已升级为 SHA-256 安全验证 -->
+    <!-- 管理员验证模态框 -->
     <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
         <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter">
-            <h3 class="text-xl font-bold mb-2 text-slate-900">管理中心</h3>
-            <p class="text-slate-500 text-sm mb-6">请输入您的管理员暗号进行加密校验。</p>
-            <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 mb-6" placeholder="输入暗号...">
+            <h3 class="text-xl font-bold mb-2 text-slate-900">管理身份验证</h3>
+            <p class="text-slate-500 text-sm mb-6" id="auth-hint">请输入管理员暗号进行操作。</p>
+            <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 mb-6" placeholder="输入您的暗号...">
             <div class="flex gap-3">
-                <button onclick="window.submitAuth()" id="auth-submit-btn" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">安全进入</button>
+                <button onclick="window.submitAuth()" id="auth-submit-btn" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">进入后台</button>
                 <button onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">取消</button>
             </div>
         </div>
@@ -86,10 +86,11 @@
             <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </div>
-            <h3 class="text-xl font-bold mb-2">确定删除此文章？</h3>
-            <div class="flex gap-3 mt-6">
-                <button id="confirm-delete-btn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">确认</button>
-                <button onclick="window.closeConfirmModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">返回</button>
+            <h3 class="text-xl font-bold mb-2 text-slate-900">确认永久删除？</h3>
+            <p class="text-slate-500 text-sm mb-8">云端数据一旦删除将无法恢复。</p>
+            <div class="flex gap-3">
+                <button id="confirm-delete-btn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition">确定删除</button>
+                <button onclick="window.closeConfirmModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">取消</button>
             </div>
         </div>
     </div>
@@ -114,26 +115,26 @@
             <!-- 视图：主页 -->
             <div id="home-view" class="view-content space-y-8">
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                    <h2 id="welcome-title" class="text-3xl font-bold mb-4 text-slate-900 tracking-tight text-balance">你好 👋</h2>
-                    <p id="welcome-desc" class="text-slate-600 leading-relaxed mb-6 italic">正在同步云端数据...</p>
+                    <h2 id="welcome-title" class="text-3xl font-bold mb-4 text-slate-900 tracking-tight">你好 👋</h2>
+                    <p id="welcome-desc" class="text-slate-600 leading-relaxed mb-6 italic">正在同步云端介绍...</p>
                     <div class="flex gap-4">
                         <span class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-full"># 2026 考研</span>
-                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-semibold rounded-full"># 长期主义者</span>
+                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-semibold rounded-full"># 坚持不懈</span>
                     </div>
                 </div>
 
                 <div class="space-y-6">
                     <h3 class="text-xl font-bold flex justify-between items-center text-slate-900">
-                        <span class="flex items-center gap-2"><span class="w-2 h-6 bg-indigo-600 rounded-full"></span>最新发布</span>
+                        <span class="flex items-center gap-2"><span class="w-2 h-6 bg-indigo-600 rounded-full"></span>最新文章</span>
                         <div id="loading-spinner" class="hidden"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div></div>
                     </h3>
                     <div id="article-list" class="space-y-6">
-                        <p class="text-slate-400 text-center py-20 italic">正在从云端读取最新内容...</p>
+                        <p class="text-slate-400 text-center py-20 italic">同步数据中...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 视图：文章详情 -->
+            <!-- 视图：详情 -->
             <div id="article-view" class="view-content hidden-view space-y-6">
                 <button onclick="window.showView('home')" class="text-sm font-medium text-slate-500 hover:text-indigo-600">← 返回列表</button>
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -141,49 +142,49 @@
                 </div>
             </div>
 
-            <!-- 视图：管理后台 -->
+            <!-- 视图：管理 -->
             <div id="admin-view" class="view-content hidden-view space-y-8">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-slate-900 text-balance">后台管理中心</h2>
+                    <h2 class="text-2xl font-bold">管理后台</h2>
                     <div class="space-x-2">
-                        <button onclick="window.logoutAdmin()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold">退出登录</button>
-                        <button onclick="window.openEditor()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition">+ 撰写新笔记</button>
+                        <button onclick="window.logoutAdmin()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold">退出</button>
+                        <button onclick="window.openEditor()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">+ 发布文章</button>
                     </div>
                 </div>
                 
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-4">
-                    <h3 class="font-bold text-slate-800 uppercase tracking-widest text-xs">个人站点设置</h3>
+                    <h3 class="font-bold">全局设置</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="set-site-title" placeholder="Logo 标题" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-1 focus:ring-indigo-400">
-                        <input type="text" id="set-contact-link" placeholder="联系链接 (如微信/邮箱二维码)" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-1 focus:ring-indigo-400">
+                        <input type="text" id="set-site-title" placeholder="Logo 文字" class="p-3 bg-slate-50 rounded-xl outline-none">
+                        <input type="text" id="set-contact-link" placeholder="联系链接 (http...)" class="p-3 bg-slate-50 rounded-xl outline-none">
                     </div>
-                    <input type="text" id="set-welcome-title" placeholder="主页欢迎大标题" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
-                    <textarea id="set-welcome-desc" placeholder="简短介绍..." rows="2" class="w-full p-3 bg-slate-50 rounded-xl outline-none"></textarea>
-                    <button onclick="window.saveSettings()" id="settings-save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">保存并更新到线上</button>
+                    <input type="text" id="set-welcome-title" placeholder="主页大标题" class="w-full p-3 bg-slate-50 rounded-xl outline-none">
+                    <textarea id="set-welcome-desc" placeholder="介绍正文" rows="2" class="w-full p-3 bg-slate-50 rounded-xl outline-none"></textarea>
+                    <button onclick="window.saveSettings()" id="settings-save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl">保存配置到线上</button>
                 </div>
 
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden" id="admin-table-body"></div>
             </div>
 
-            <!-- 视图：内容编辑器 -->
+            <!-- 视图：编辑器 -->
             <div id="editor-view" class="view-content hidden-view space-y-6">
                 <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                    <h3 id="editor-title" class="text-xl font-bold mb-6 text-indigo-600">编辑文章</h3>
+                    <h3 id="editor-title" class="text-xl font-bold mb-6 text-indigo-600">博文编辑</h3>
                     <form id="post-form" class="space-y-4">
                         <input type="hidden" id="edit-id">
-                        <input type="text" id="post-title" placeholder="标题" class="w-full p-4 bg-slate-50 rounded-xl outline-none border border-slate-100 focus:border-indigo-400" required>
+                        <input type="text" id="post-title" placeholder="标题" class="w-full p-4 bg-slate-50 rounded-xl outline-none" required>
                         <div class="grid grid-cols-2 gap-4">
-                            <select id="post-category" class="p-4 bg-slate-50 rounded-xl outline-none border border-slate-100">
+                            <select id="post-category" class="p-4 bg-slate-50 rounded-xl outline-none">
                                 <option value="考研笔记">考研笔记</option>
                                 <option value="投资周报">投资周报</option>
                                 <option value="生活随笔">生活随笔</option>
                             </select>
-                            <input type="text" id="post-date" class="p-4 bg-slate-100 rounded-xl outline-none border border-slate-100" readonly>
+                            <input type="text" id="post-date" class="p-4 bg-slate-100 rounded-xl outline-none" readonly>
                         </div>
-                        <textarea id="post-summary" placeholder="展示在主页的简短摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-xl outline-none border border-slate-100 focus:border-indigo-400" required></textarea>
-                        <textarea id="post-content" placeholder="文章正文内容 (支持 HTML 格式)" rows="12" class="w-full p-4 bg-slate-50 rounded-xl outline-none border border-slate-100 focus:border-indigo-400 font-mono text-sm" required></textarea>
+                        <textarea id="post-summary" placeholder="展示摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-xl outline-none" required></textarea>
+                        <textarea id="post-content" placeholder="正文 (支持 HTML)" rows="12" class="w-full p-4 bg-slate-50 rounded-xl outline-none font-mono text-sm" required></textarea>
                         <div class="flex gap-4">
-                            <button type="submit" id="submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold hover:shadow-lg transition">发布到云端</button>
+                            <button type="submit" id="submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">同步到云端</button>
                             <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold">返回</button>
                         </div>
                     </form>
@@ -191,20 +192,18 @@
             </div>
         </div>
 
-        <!-- 侧边栏：工具组件 -->
+        <!-- 侧边栏 -->
         <div class="space-y-8">
-            <!-- 考研倒计时 -->
             <div class="bg-indigo-600 text-white p-8 rounded-3xl shadow-lg relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500 rounded-full opacity-50"></div>
-                <h3 class="font-bold mb-4 relative z-10 text-xs uppercase tracking-widest text-indigo-100 font-semibold">考研倒计时</h3>
-                <div class="text-5xl font-bold mb-4 tabular-nums relative z-10" id="countdown">加载中...</div>
+                <h3 class="font-bold mb-4 relative z-10 uppercase tracking-widest text-xs">考研倒计时</h3>
+                <div class="text-5xl font-bold mb-4 tabular-nums relative z-10" id="countdown">...</div>
                 <div class="w-full bg-indigo-500 rounded-full h-2 mb-4">
                     <div id="progress-bar" class="bg-white h-2 rounded-full transition-all duration-1000"></div>
                 </div>
-                <p class="text-[10px] text-indigo-100 relative z-10 opacity-80" id="progress-text">目标：2026年12月20日</p>
+                <p class="text-xs text-indigo-100 relative z-10" id="progress-text">目标：2026年12月20日</p>
             </div>
 
-            <!-- 财富复利模拟器 -->
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                 <h3 class="font-bold text-slate-900 mb-6 flex justify-between items-center">
                     财富复利模拟器
@@ -212,31 +211,25 @@
                 </h3>
                 <div class="canvas-container mb-6 group">
                     <canvas id="compoundCanvas"></canvas>
-                    <div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 whitespace-nowrap min-w-[150px] border border-white/10 leading-relaxed"></div>
+                    <div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 whitespace-nowrap min-w-[150px] border border-white/10"></div>
                 </div>
                 <div class="space-y-5">
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">初始本金</label><input type="number" id="inputPrincipal" value="10000" class="number-input"></div>
-                        <div><label class="block text-[10px] text-slate-400 mb-1 uppercase font-bold">每月定投</label><input type="number" id="inputMonthly" value="2000" class="number-input"></div>
+                        <div><label class="block text-[10px] text-slate-400 mb-1">初始本金</label><input type="number" id="inputPrincipal" value="10000" class="number-input"></div>
+                        <div><label class="block text-[10px] text-slate-400 mb-1">每月定投</label><input type="number" id="inputMonthly" value="2000" class="number-input"></div>
                     </div>
                     <div>
-                        <div class="flex justify-between text-xs font-bold mb-2"><span>投资时长</span><span class="text-indigo-600 font-mono"><span id="yearsVal">20</span> 年</span></div>
+                        <div class="flex justify-between text-xs font-bold mb-2"><span>投资时长</span><span class="text-indigo-600"><span id="yearsVal">20</span> 年</span></div>
                         <input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
                     </div>
                     <div>
-                        <div class="flex justify-between text-xs font-bold mb-2"><span>预期年化收益</span><span class="text-indigo-600 font-mono"><span id="rateVal">8</span>%</span></div>
+                        <div class="flex justify-between text-xs font-bold mb-2"><span>预期年化</span><span class="text-indigo-600"><span id="rateVal">8</span>%</span></div>
                         <input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer">
                     </div>
                 </div>
-                <div class="mt-8 pt-6 border-t border-slate-50">
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="text-center"><div class="text-[10px] text-slate-400 uppercase mb-1">本金投入</div><div id="totalInvested" class="text-sm font-bold text-slate-700 font-mono">¥ 0</div></div>
-                        <div class="text-center"><div class="text-[10px] text-slate-400 uppercase mb-1">累计利息</div><div id="totalInterest" class="text-sm font-bold text-emerald-600 font-mono">¥ 0</div></div>
-                    </div>
-                    <div class="text-center bg-indigo-50/50 py-4 rounded-2xl border border-indigo-100/50">
-                        <div class="text-[10px] text-indigo-400 mb-1 font-bold uppercase tracking-widest">最终资产预期</div>
-                        <div class="text-2xl font-bold text-indigo-600 tracking-tight font-mono" id="finalWealth">计算中...</div>
-                    </div>
+                <div class="mt-8 pt-6 border-t border-slate-50 text-center">
+                    <div class="text-xs text-indigo-400 mb-1 font-bold">最终资产预期</div>
+                    <div class="text-3xl font-bold text-indigo-600 tracking-tight" id="finalWealth">计算中...</div>
                 </div>
             </div>
         </div>
@@ -247,15 +240,10 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- 安全 SHA-256 加密逻辑 ---
-        const ADMIN_SHA256 = "0d588523c907869680327f3089456574f19811f5898f0907a82c4786417c8091";
-
-        async function verifySHA256(str) {
-            const msgUint8 = new TextEncoder().encode(str);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
+        // --- 核心配置 ---
+        const ADMIN_MASK = "WFlGeHlmMTIzNDU2QA=="; // 暗号掩码
+        const MAX_ATTEMPTS = 5; // 最大尝试次数
+        const LOCKOUT_MS = 5 * 60 * 1000; // 锁定时间 (5分钟)
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU",
@@ -278,32 +266,23 @@
         let isAdminAuthenticated = false;
         let articles = [];
         let user = null;
+        
+        // 错误尝试统计变量
+        let failedAttempts = 0;
+        let lockoutUntil = 0;
 
-        // --- 键盘快捷键监听 ---
+        // --- 键盘监听 ---
         const pwInput = document.getElementById('admin-password-input');
         pwInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                window.submitAuth();
-            }
-            if (e.key === 'Escape') {
-                window.closeAuthModal();
-            }
-        });
-
-        // 窗口级别的 Esc 监听（确保弹窗打开时任何时候按 Esc 都能退出）
-        window.addEventListener('keydown', (e) => {
-            const modal = document.getElementById('auth-modal');
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                window.closeAuthModal();
-            }
+            if (e.key === 'Enter') { window.submitAuth(); }
+            if (e.key === 'Escape') { window.closeAuthModal(); }
         });
 
         // --- 认证生命周期 ---
         onAuthStateChanged(auth, (u) => {
             user = u;
             if (user) {
-                console.log("Firebase 云端数据库连接成功");
+                console.log("云端数据库已就绪");
                 startDataListener();
                 startSettingsListener();
             }
@@ -321,46 +300,73 @@
 
         // --- 验证逻辑 ---
         window.checkAdminAuth = () => {
-            isAdminAuthenticated ? window.showView('admin') : document.getElementById('auth-modal').classList.remove('hidden');
-            if (!isAdminAuthenticated) {
-                setTimeout(() => pwInput.focus(), 100); // 自动聚焦输入框
+            if (isAdminAuthenticated) { 
+                window.showView('admin'); 
+                return;
             }
+
+            const now = Date.now();
+            if (now < lockoutUntil) {
+                const remaining = Math.ceil((lockoutUntil - now) / 60000);
+                alert(`由于尝试次数过多，请在 ${remaining} 分钟后再试。`);
+                return;
+            }
+
+            document.getElementById('auth-modal').classList.remove('hidden');
+            setTimeout(() => pwInput.focus(), 150);
+            updateHint();
         };
+
         window.closeAuthModal = () => {
             document.getElementById('auth-modal').classList.add('hidden');
-            pwInput.value = ""; // 清空密码
+            pwInput.value = "";
         };
-        
-        window.submitAuth = async () => {
-            const btn = document.getElementById('auth-submit-btn');
-            const input = pwInput.value;
-            
-            if (!input) return;
-            btn.innerText = "校验中...";
-            btn.disabled = true;
 
-            try {
-                const hashedInput = await verifySHA256(input);
-                if (hashedInput === ADMIN_SHA256) { 
-                    isAdminAuthenticated = true; 
-                    window.closeAuthModal(); 
-                    window.showView('admin'); 
+        function updateHint() {
+            const hintEl = document.getElementById('auth-hint');
+            if (failedAttempts > 0) {
+                hintEl.innerText = `暗号不匹配！还可以尝试 ${MAX_ATTEMPTS - failedAttempts} 次。`;
+                hintEl.classList.add('text-red-500');
+            } else {
+                hintEl.innerText = `请输入管理员暗号进行操作。`;
+                hintEl.classList.remove('text-red-500');
+            }
+        }
+        
+        window.submitAuth = () => {
+            const now = Date.now();
+            if (now < lockoutUntil) {
+                const remaining = Math.ceil((lockoutUntil - now) / 60000);
+                alert(`账户锁定中，剩余 ${remaining} 分钟。`);
+                return;
+            }
+
+            const input = pwInput.value;
+            if (btoa(input) === ADMIN_MASK) { 
+                // 成功进入
+                isAdminAuthenticated = true; 
+                failedAttempts = 0; // 重置尝试次数
+                window.closeAuthModal(); 
+                window.showView('admin'); 
+            } else {
+                // 失败处理
+                failedAttempts++;
+                if (failedAttempts >= MAX_ATTEMPTS) {
+                    lockoutUntil = Date.now() + LOCKOUT_MS;
+                    failedAttempts = 0; // 锁定后重置计数
+                    alert("错误次数过多！管理权限已锁定 5 分钟。");
+                    window.closeAuthModal();
                 } else {
-                    alert("暗号不匹配，请重新输入（注意特殊字符 @ 和大小写）。");
+                    updateHint();
                     pwInput.value = "";
                     pwInput.focus();
                 }
-            } catch (e) {
-                alert("安全校验失败：请确保在 HTTPS 网址环境下运行。本地调试建议先开启 GitHub Pages。");
-            } finally {
-                btn.innerText = "安全进入";
-                btn.disabled = false;
             }
         };
 
         window.logoutAdmin = () => { isAdminAuthenticated = false; window.showView('home'); };
 
-        // --- 视图切换逻辑 ---
+        // --- 视图逻辑 ---
         window.showView = (v, id = null) => {
             ['home-view', 'article-view', 'admin-view', 'editor-view'].forEach(x => {
                 const el = document.getElementById(x);
@@ -373,7 +379,7 @@
                 const a = articles.find(x => x.id === id);
                 if (a) {
                     document.getElementById('article-detail-content').innerHTML = `
-                        <h1 class="text-4xl font-extrabold mb-6 text-slate-900 tracking-tight leading-tight">${a.title}</h1>
+                        <h1 class="text-4xl font-extrabold mb-6 text-slate-900 tracking-tight">${a.title}</h1>
                         <div class="flex items-center gap-3 text-sm mb-8"><span class="px-3 py-1 bg-indigo-50 text-indigo-600 font-bold rounded-lg">${a.category}</span><span class="text-slate-400">📅 ${a.date}</span></div>
                         <div class="prose prose-indigo max-w-none text-slate-600 leading-relaxed text-lg">${a.content}</div>`;
                 }
@@ -381,25 +387,25 @@
             window.scrollTo(0, 0);
         };
 
-        // --- 数据监听器 ---
+        // --- 数据库监听 ---
         function startDataListener() {
             onSnapshot(articlesCol, s => {
                 articles = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date.replace(/\./g,'-')) - new Date(a.date.replace(/\./g,'-')));
                 const listEl = document.getElementById('article-list');
                 if (articles.length === 0) {
-                    listEl.innerHTML = '<p class="text-slate-400 text-center py-20 italic">尚未发布文章，快进入管理中心开启你的创作之路吧。</p>';
+                    listEl.innerHTML = '<p class="text-slate-400 text-center py-20 italic">点击管理中心，开启你的 2026 奋斗之旅。</p>';
                 } else {
                     listEl.innerHTML = articles.map(a => `
                         <div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-3xl border border-slate-100 hover:border-indigo-100 shadow-sm hover:shadow-xl transition-all cursor-pointer">
                             <div class="flex justify-between mb-4"><span class="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase">${a.category}</span><span class="text-xs text-slate-300">${a.date}</span></div>
                             <h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors">${a.title}</h4>
-                            <p class="text-slate-500 text-sm mb-4 line-clamp-2 leading-relaxed text-balance">${a.summary}</p>
-                            <div class="text-indigo-600 text-xs font-bold tracking-widest group-hover:translate-x-2 transition-transform inline-block">READ MORE →</div>
+                            <p class="text-slate-500 text-sm mb-4 line-clamp-2">${a.summary}</p>
+                            <div class="text-indigo-600 text-xs font-bold tracking-widest">READ FULL STORY →</div>
                         </div>`).join('');
                 }
                 const adminList = document.getElementById('admin-table-body');
                 if (adminList) {
-                    adminList.innerHTML = `<div class="p-6 border-b border-slate-50 font-bold text-slate-800 text-xs uppercase tracking-widest">博文管理</div>` + articles.map(a => `
+                    adminList.innerHTML = `<div class="p-6 border-b border-slate-50 font-bold text-slate-800 text-xs uppercase tracking-widest">全部笔记</div>` + articles.map(a => `
                         <div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition">
                             <span class="font-bold text-slate-700 truncate mr-4">${a.title}</span>
                             <div class="space-x-4 flex-shrink-0 text-sm"><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-semibold">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-semibold">删除</button></div>
@@ -414,7 +420,7 @@
                     const d = s.data();
                     document.getElementById('nav-site-title').innerText = d.siteTitle || 'STRIVE 2026';
                     document.getElementById('welcome-title').innerText = d.welcomeTitle || '你好 👋';
-                    document.getElementById('welcome-desc').innerText = d.welcomeDesc || '正在同步线上数据...';
+                    document.getElementById('welcome-desc').innerText = d.welcomeDesc || '同步云端介绍中...';
                     document.getElementById('nav-contact-btn').href = d.contactLink || '#';
                     document.getElementById('set-site-title').value = d.siteTitle || '';
                     document.getElementById('set-welcome-title').value = d.welcomeTitle || '';
@@ -424,7 +430,6 @@
             });
         }
 
-        // --- 后台操作函数 ---
         window.saveSettings = async () => {
             const btn = document.getElementById('settings-save-btn');
             btn.disabled = true; btn.innerText = "同步中...";
@@ -435,9 +440,9 @@
                     welcomeDesc: document.getElementById('set-welcome-desc').value,
                     contactLink: document.getElementById('set-contact-link').value
                 });
-                alert("站点配置更新成功！");
-            } catch(e) { alert("同步失败：请确认 Firebase 数据库的 Rules 已设为测试模式。"); }
-            btn.disabled = false; btn.innerText = "保存配置";
+                alert("站点配置已同步生效！");
+            } catch(e) { alert("同步失败，请检查 Firebase Rules 配置。"); }
+            btn.disabled = false; btn.innerText = "保存配置到线上";
         };
 
         window.openEditor = (id = null) => {
@@ -463,7 +468,7 @@
                 if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id), data);
                 else await addDoc(articlesCol, data);
                 window.showView('admin');
-            } catch (err) { alert("保存失败：云端认证已过期或权限不足。"); }
+            } catch (err) { alert("保存失败，请检查云端匿名登录权限！"); }
             btn.disabled = false;
         };
 
@@ -477,7 +482,7 @@
 
         window.closeConfirmModal = () => document.getElementById('confirm-modal').classList.add('hidden');
 
-        // --- 财富复利模拟器核心算法 ---
+        // --- 财富复利模拟器逻辑 ---
         const cvs = document.getElementById('compoundCanvas'), cx = cvs.getContext('2d'), tooltip = document.getElementById('chart-tooltip');
         let chartData = [];
 
@@ -498,8 +503,9 @@
 
             const maxVal = chartData[chartData.length-1].wealth || 1;
             document.getElementById('finalWealth').innerText = `¥${Math.round(maxVal).toLocaleString()}`;
-            document.getElementById('totalInvested').innerText = `¥${Math.round(chartData[chartData.length-1].principal).toLocaleString()}`;
-            document.getElementById('totalInterest').innerText = `¥${Math.round(chartData[chartData.length-1].interest).toLocaleString()}`;
+            const invEl = document.getElementById('totalInvested'), intEl = document.getElementById('totalInterest');
+            if(invEl) invEl.innerText = `¥${Math.round(chartData[chartData.length-1].principal).toLocaleString()}`;
+            if(intEl) intEl.innerText = `¥${Math.round(chartData[chartData.length-1].interest).toLocaleString()}`;
 
             cx.clearRect(0, 0, w, h);
             cx.strokeStyle = '#f1f5f9'; cx.lineWidth = 1; cx.setLineDash([5, 5]);
@@ -513,11 +519,9 @@
             cx.beginPath(); cx.moveTo(0, h);
             chartData.forEach(d => cx.lineTo((d.year/yrs)*w, h - (d.wealth/maxVal)*(h-60)-30));
             for(let i=chartData.length-1; i>=0; i--){
-                const d = chartData[i];
-                cx.lineTo((d.year/yrs)*w, h - (d.principal/maxVal)*(h-60)-30);
+                const d = chartData[i]; cx.lineTo((d.year/yrs)*w, h - (d.principal/maxVal)*(h-60)-30);
             }
-            cx.fillStyle = '#10b981'; cx.globalAlpha = 0.4; cx.fill();
-            cx.globalAlpha = 1.0;
+            cx.fillStyle = '#10b981'; cx.globalAlpha = 0.4; cx.fill(); cx.globalAlpha = 1.0;
 
             cx.beginPath(); cx.strokeStyle = '#4f46e5'; cx.lineWidth = 3;
             chartData.forEach((d, i) => {
@@ -534,17 +538,16 @@
             if(d) {
                 const max = chartData[chartData.length-1].wealth;
                 const px = (d.year/yrs)*cvs.width, py = cvs.height - (d.wealth/max)*(cvs.height-60)-30;
-                let leftPos = px + 15;
-                if (leftPos + 160 > cvs.width) leftPos = px - 170;
-                tooltip.classList.remove('hidden'); tooltip.style.left = leftPos + 'px'; tooltip.style.top = (py - 80) + 'px';
-                tooltip.innerHTML = `<div class="font-bold border-b border-white/20 pb-1 mb-2 text-indigo-200">第 ${d.year} 年预期</div>
-                    <div class="flex justify-between gap-4"><span>累计投入:</span><span>¥${Math.round(d.principal).toLocaleString()}</span></div>
-                    <div class="flex justify-between gap-4 text-emerald-300"><span>累计收益:</span><span>¥${Math.round(d.interest).toLocaleString()}</span></div>
-                    <div class="flex justify-between gap-4 mt-1 pt-1 border-t border-white/10 font-bold text-white"><span>总资产:</span><span>¥${Math.round(d.wealth).toLocaleString()}</span></div>`;
+                tooltip.classList.remove('hidden'); tooltip.style.left = (px > cvs.width - 160 ? px - 170 : px + 15) + 'px';
+                tooltip.style.top = (py - 80) + 'px';
+                tooltip.innerHTML = `<div class="font-bold border-b border-white/20 pb-1 mb-2">第 ${d.year} 年预期</div>
+                    <div class="flex justify-between gap-4"><span>本金投入:</span><span>¥${Math.round(d.principal).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-4 text-emerald-300"><span>累计利息:</span><span>¥${Math.round(d.interest).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-4 mt-1 pt-1 border-t border-white/10 font-bold text-white"><span>资产合计:</span><span>¥${Math.round(d.wealth).toLocaleString()}</span></div>`;
                 renderChart(); cx.beginPath(); cx.strokeStyle='#4f46e5'; cx.arc(px,py,5,0,Math.PI*2); cx.stroke(); cx.fillStyle='white'; cx.fill();
             }
         };
-        cvs.onmouseleave = () => { tooltip.classList.add('hidden'); renderChart(); };
+        cvs.onmouseleave = () => { if(tooltip) tooltip.classList.add('hidden'); renderChart(); };
 
         ['yearsInput', 'rateInput', 'inputPrincipal', 'inputMonthly'].forEach(id => {
             const el = document.getElementById(id);
@@ -557,16 +560,14 @@
             }
         });
 
-        // --- 倒计时逻辑 ---
+        // --- 倒计时与进度 ---
         setInterval(() => {
             const tgt = new Date('2026-12-20'), start = new Date('2026-01-01'), now = new Date();
             const days = Math.ceil((tgt-now)/86400000);
             const pct = Math.min(100, Math.max(0, ((now-start)/(tgt-start))*100));
-            document.getElementById('countdown').innerText = days + ' 天';
-            const pb = document.getElementById('progress-bar');
-            if (pb) pb.style.width = pct + '%';
-            const pt = document.getElementById('progress-text');
-            if (pt) pt.innerText = `距离 2026 考研仅剩 ${days} 天，已完成年度计划的 ${pct.toFixed(1)}%`;
+            const cd = document.getElementById('countdown'); if(cd) cd.innerText = days + ' 天';
+            const pb = document.getElementById('progress-bar'); if(pb) pb.style.width = pct + '%';
+            const pt = document.getElementById('progress-text'); if(pt) pt.innerText = `已完成 2026 年度计划进度的 ${pct.toFixed(1)}%`;
         }, 1000);
 
         renderChart();
