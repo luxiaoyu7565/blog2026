@@ -20,7 +20,7 @@
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         article img { max-width: 100%; height: auto; border-radius: 1rem; margin: 1.5rem 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         
-        /* 保持已修好的复利模拟器布局 */
+        /* 保持已修好的复利模拟器布局：防止横线重叠 */
         .number-input {
             @apply bg-slate-50 border border-slate-100 rounded-lg text-xs font-semibold text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-400 transition;
             padding: 4px 8px;
@@ -33,7 +33,12 @@
             @apply bg-white p-5 rounded-2xl border border-slate-100 mb-4 transition-all hover:border-indigo-100 hover:shadow-sm relative;
         }
 
-        /* 删除图标按钮 */
+        /* 评论头部：左右布局 */
+        .comment-header {
+            @apply flex justify-between items-start mb-2;
+        }
+
+        /* 删除图标按钮：极简风格 */
         .comment-delete-btn {
             @apply text-slate-300 hover:text-red-500 transition-colors cursor-pointer border-none outline-none bg-transparent flex items-center justify-center p-1;
         }
@@ -55,7 +60,7 @@
         <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter">
             <h3 class="text-xl font-bold mb-2 text-slate-900 text-center">身份确认</h3>
             <p class="text-slate-500 text-xs mb-6 text-center" id="auth-hint">请输入管理员暗号进入后台</p>
-            <form id="login-form" onsubmit="return false;">
+            <form id="login-form">
                 <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 mb-6" placeholder="暗号..." autocomplete="current-password">
                 <div class="flex gap-3">
                     <button type="submit" id="submit-auth-btn" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-sm">确定 (Enter)</button>
@@ -69,13 +74,13 @@
     <nav class="sticky top-0 z-50 glass-card py-4 px-6 mb-8 shadow-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h1 onclick="window.handleLogoClick()" id="nav-site-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent cursor-pointer select-none">STRIVE 2026</h1>
-            <div class="space-x-6 text-sm font-medium flex items-center text-slate-600">
-                <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition font-bold">首页</a>
-                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hidden hover:text-indigo-600 transition flex items-center gap-1 font-bold text-slate-600">
+            <div class="space-x-6 text-sm font-medium flex items-center text-slate-600 font-bold">
+                <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition">首页</a>
+                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hidden hover:text-indigo-600 transition flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     管理中心
                 </a>
-                <a id="nav-contact-btn" href="#" target="_blank" class="px-5 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition font-bold shadow-lg shadow-indigo-200">联系我</a>
+                <a id="nav-contact-btn" href="#" target="_blank" class="px-5 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">联系我</a>
             </div>
         </div>
     </nav>
@@ -99,7 +104,7 @@
             </div>
 
             <div id="article-view" class="view-content hidden-view space-y-8">
-                <button onclick="window.showView('home')" class="group flex items-center text-sm font-bold text-slate-400 hover:text-indigo-600 transition font-bold">
+                <button onclick="window.showView('home')" class="group flex items-center text-sm font-bold text-slate-400 hover:text-indigo-600 transition">
                     <span class="mr-2 group-hover:-translate-x-1 transition-transform">←</span> 返回列表
                 </button>
                 
@@ -239,8 +244,9 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- 核心配置 ---
         const ADMIN_MASK = "WFlGeHlmMTIzNDU2QA=="; 
-        const PERSIST_KEY = "luxiaoyu_auth_token_v6"; 
+        const PERSIST_KEY = "luxiaoyu_auth_token_v7"; // 每次大版本更新建议稍微修改 Key
         const MAX_ATTEMPTS = 5;
         const LOCKOUT_MS = 5 * 60 * 1000;
 
@@ -273,37 +279,67 @@
         let securityRecord = null;
         let chartData = [];
 
-        // --- 核心：登录回车监听逻辑 ---
+        // --- 核心：网址路由同步 (解决刷新掉页面的问题) ---
+        window.showView = (v, id = null) => {
+            // 更新网址后缀：例如 #/article/123 或 #/admin
+            let hash = `#/${v}`;
+            if (id) hash += `/${id}`;
+            location.hash = hash;
+            // 网址变了，会自动触发下面的 hashchange 监听器
+        };
+
+        const updateUIFromHash = () => {
+            const hashPath = location.hash.replace(/^#\//, '');
+            const parts = hashPath.split('/');
+            const view = parts[0] || 'home';
+            const id = parts[1] || null;
+
+            // 隐藏所有视图
+            ['home', 'article', 'admin', 'editor'].forEach(x => {
+                document.getElementById(x + '-view')?.classList.add('hidden-view');
+            });
+            
+            // 显示目标视图
+            document.getElementById(view + '-view')?.classList.remove('hidden-view');
+
+            if (view === 'article' && id) {
+                currentArticleId = id;
+                const a = articles.find(x => x.id === id);
+                if(a) {
+                    document.getElementById('article-detail-content').innerHTML = `<h1 class="text-4xl font-extrabold mb-4 tracking-tight leading-tight">${a.title}</h1><div class="text-slate-400 text-sm mb-12 flex items-center gap-2 font-bold uppercase tracking-widest">📅 发布于 ${a.date}</div><div class="content-body">${a.content}</div>`;
+                    renderComments();
+                }
+            } else {
+                currentArticleId = null;
+            }
+            window.scrollTo(0, 0);
+        };
+
+        window.addEventListener('hashchange', updateUIFromHash);
+
+        // --- 核心：回车键监听逻辑加固 ---
         window.submitAuth = async () => {
-            const pwInput = document.getElementById('admin-password-input');
-            if (!pwInput) return;
-            const input = pwInput.value;
+            const inputEl = document.getElementById('admin-password-input');
+            if(!inputEl) return;
+            const input = inputEl.value;
             const now = Date.now();
             if (btoa(input) === ADMIN_MASK) { 
                 isAdminAuthenticated = true; 
                 localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
                 if (securityRecord) await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
-                window.closeAuthModal(); window.showView('admin'); 
+                window.closeAuthModal(); 
+                window.showView('admin'); 
                 renderComments(); 
             } else {
                 let attempts = (securityRecord ? securityRecord.failedAttempts : 0) + 1;
                 let lockoutTime = attempts >= MAX_ATTEMPTS ? now + LOCKOUT_MS : 0;
                 await setDoc(doc(securityCol, user.uid), { failedAttempts: lockoutTime > 0 ? 0 : attempts, lockoutUntil: lockoutTime });
-                if (lockoutTime > 0) { alert("锁定 5 分钟！"); window.closeAuthModal(); }
-                else { alert(`错误！剩余 ${MAX_ATTEMPTS - attempts} 次机会。`); }
+                if (lockoutTime > 0) { alert("输错5次，锁定5分钟！"); window.closeAuthModal(); }
+                else { alert(`暗号错误！还剩 ${MAX_ATTEMPTS - attempts} 次机会。`); }
             }
         };
 
-        // 立即执行回车监听绑定
-        const setupLoginEvents = () => {
-            const form = document.getElementById('login-form');
-            const input = document.getElementById('admin-password-input');
-            if(form) form.addEventListener('submit', (e) => { e.preventDefault(); window.submitAuth(); });
-            if(input) input.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); window.submitAuth(); } });
-        };
-        // 在 script 加载时就尝试寻找元素
-        setTimeout(setupLoginEvents, 500);
-
+        // --- 监听与助手 ---
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') window.closeAuthModal();
         });
@@ -351,6 +387,19 @@
             }
         })();
 
+        // 初始化完成后挂载回车键
+        window.onload = () => {
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    window.submitAuth();
+                });
+            }
+            // 初次加载时检查路由
+            if (location.hash) updateUIFromHash();
+        };
+
         window.checkAdminAuth = async () => {
             if (isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) {
                 isAdminAuthenticated = true; window.showView('admin'); return;
@@ -376,7 +425,7 @@
             renderComments();
         };
 
-        // --- 评论管理 (UI 恢复右上角时间样式) ---
+        // --- 评论管理 (UI 改良：右上角带年份日期) ---
         function startCommentsListener() {
             onSnapshot(commentsCol, s => {
                 comments = s.docs.map(d => ({id: d.id, ...d.data()}));
@@ -404,12 +453,18 @@
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
                     </button>` : '';
 
+                // 日期格式包含年份
+                const dateStr = c.timestamp?.toDate().toLocaleString('zh-CN', {
+                    year: 'numeric', month: 'numeric', day: 'numeric', 
+                    hour: '2-digit', minute: '2-digit'
+                }) || '刚刚';
+
                 return `
                 <div class="comment-card">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="font-bold text-indigo-600 text-sm">${c.name || '访客'}</span>
+                    <div class="comment-header">
+                        <span class="font-bold text-indigo-600 text-sm">${c.name || '匿名访客'}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-slate-400 font-medium">${c.timestamp?.toDate().toLocaleString('zh-CN', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) || '刚刚'}</span>
+                            <span class="text-[10px] text-slate-400 font-bold">${dateStr}</span>
                             ${deleteBtnHtml}
                         </div>
                     </div>
@@ -430,7 +485,7 @@
             } finally { btn.disabled = false; }
         };
 
-        // --- 其余功能逻辑 ---
+        // --- 数据监听与发布 ---
         function startSettingsListener() {
             onSnapshot(settingsDoc, s => {
                 const d = s.exists() ? s.data() : {};
@@ -464,24 +519,12 @@
         function startDataListener() {
             onSnapshot(articlesCol, s => {
                 articles = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date?.replace(/\./g,'-')) - new Date(a.date?.replace(/\./g,'-')));
-                document.getElementById('article-list').innerHTML = articles.map(a => `<div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer relative overflow-hidden"><h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors text-balance">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed">${a.summary}</p><div class="text-indigo-600 mt-6 text-xs font-bold uppercase tracking-widest flex items-center text-balance">READ FULL STORY →</div></div>`).join('');
+                document.getElementById('article-list').innerHTML = articles.map(a => `<div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer relative overflow-hidden"><h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors text-balance">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed">${a.summary}</p><div class="text-indigo-600 mt-6 text-xs font-bold uppercase tracking-widest flex items-center text-balance text-indigo-600 font-bold">READ FULL STORY →</div></div>`).join('');
                 document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400">文章列表 (${articles.length})</div>` + articles.map(a => `<div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition"><span class="font-bold text-slate-700 text-sm truncate mr-4">${a.title}</span><div class="space-x-4 flex-shrink-0"><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs">删除</button></div></div>`).join('');
+                // 数据加载后，如果当前正在看某篇文章，尝试更新一下
+                if (location.hash.includes('article')) updateUIFromHash();
             });
         }
-
-        window.showView = (v, id = null) => {
-            ['home', 'article', 'admin', 'editor'].forEach(x => document.getElementById(x + '-view')?.classList.add('hidden-view'));
-            document.getElementById(v + '-view')?.classList.remove('hidden-view');
-            if (v === 'article' && id) {
-                currentArticleId = id;
-                const a = articles.find(x => x.id === id);
-                if(a) {
-                    document.getElementById('article-detail-content').innerHTML = `<h1 class="text-4xl font-extrabold mb-4 tracking-tight leading-tight">${a.title}</h1><div class="text-slate-400 text-sm mb-12 flex items-center gap-2"><span>📅 ${a.date}</span></div><div class="content-body">${a.content}</div>`;
-                    renderComments();
-                }
-            } else currentArticleId = null;
-            window.scrollTo(0, 0);
-        };
 
         window.openEditor = (id = null) => {
             document.getElementById('post-form').reset();
