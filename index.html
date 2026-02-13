@@ -82,10 +82,10 @@
         <div class="lg:col-span-2 space-y-8 text-left">
             <!-- 首页视图 -->
             <div id="home-view" class="view-content space-y-8">
-                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden text-left">
+                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden text-left text-balance">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-[5rem] -z-10 opacity-50"></div>
                     <h2 id="welcome-title" class="text-4xl font-extrabold mb-4 text-slate-900 tracking-tight text-balance">你好 👋</h2>
-                    <p id="welcome-desc" class="text-slate-500 text-lg leading-relaxed mb-8 italic">数据同步中...</p>
+                    <p id="welcome-desc" class="text-slate-500 text-lg leading-relaxed mb-8 italic">数据加载中...</p>
                     <div id="welcome-tags" class="flex flex-wrap gap-3"></div>
                 </div>
                 <div class="space-y-6 text-left">
@@ -98,11 +98,11 @@
 
             <!-- 文章详情视图 -->
             <div id="article-view" class="view-content hidden-view space-y-8 text-left text-balance">
-                <button onclick="window.showView('home')" class="group flex items-center text-sm font-bold text-slate-400 hover:text-indigo-600 transition font-bold">
+                <button onclick="window.showView('home')" class="group flex items-center text-sm font-bold text-slate-400 hover:text-indigo-600 transition font-bold text-left">
                     <span class="mr-2 group-hover:-translate-x-1 transition-transform">←</span> 返回列表
                 </button>
-                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100">
-                    <div id="article-detail-content" class="prose prose-indigo prose-lg max-w-none content-body"></div>
+                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 text-left">
+                    <div id="article-detail-content" class="prose prose-indigo prose-lg max-w-none content-body text-left"></div>
                 </div>
                 <!-- 互动评论 -->
                 <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 text-left text-balance">
@@ -131,20 +131,20 @@
                 <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6 text-balance text-left">
                     <h3 class="font-bold text-sm uppercase tracking-tighter text-indigo-600">文字配置</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                        <div class="space-y-1">
+                        <div class="space-y-1 text-left">
                             <label class="text-[10px] font-bold text-slate-400 ml-2">站点名字</label>
                             <input type="text" id="set-site-title" class="w-full p-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-indigo-100 outline-none">
                         </div>
-                        <div class="space-y-1">
+                        <div class="space-y-1 text-left">
                             <label class="text-[10px] font-bold text-slate-400 ml-2">联系链接</label>
                             <input type="text" id="set-contact-link" class="w-full p-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-indigo-100 outline-none w-full">
                         </div>
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1 text-left">
                         <label class="text-[10px] font-bold text-slate-400 ml-2">大标题</label>
                         <input type="text" id="set-welcome-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none">
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1 text-left">
                         <label class="text-[10px] font-bold text-slate-400 ml-2">主页详细描述</label>
                         <textarea id="set-welcome-desc" rows="2" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
                     </div>
@@ -152,6 +152,7 @@
                         <input type="text" id="set-tag1" placeholder="标签1" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
                         <input type="text" id="set-tag2" placeholder="标签2" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
                     </div>
+                    <!-- 核心修复：这个按钮的 onclick 之前逻辑写错了，现在已修好 -->
                     <button onclick="window.saveSettings()" id="save-settings-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl hover:bg-indigo-700 transition">保存修改并同步</button>
                 </div>
                 <div id="admin-table-body" class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-balance text-left"></div>
@@ -171,11 +172,11 @@
                         <input type="hidden" id="edit-id">
                         <input type="text" id="post-title" placeholder="博文标题" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none text-xl font-bold" required>
                         <textarea id="post-summary" placeholder="首页摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-bold" required></textarea>
-                        <div class="text-[10px] text-slate-400 ml-2 mb-1 font-bold text-left">提示：插入图片会变成 [[图片1]]，发布后自动生成。</div>
+                        <div class="text-[10px] text-slate-400 ml-2 mb-1 font-bold text-left tracking-tight">提示：支持 Ctrl+V 粘贴图片，插入图片会变成 [[图片1]]，发布后自动生成。</div>
                         <textarea id="post-content" placeholder="正文内容..." rows="18" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-mono text-sm leading-relaxed" required></textarea>
                         <div class="flex gap-4 pt-4 text-left text-balance">
                             <button type="button" onclick="window.submitPost()" id="post-submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl">发布同步</button>
-                            <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold">返回</button>
+                            <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-balance">返回</button>
                         </div>
                     </div>
                 </div>
@@ -230,9 +231,10 @@
         let isAdminAuthenticated = false, articles = [], comments = [], currentArticleId = null, user = null, securityRecord = null, chartData = [];
         window.tempMediaMap = {};
 
+        // --- 1. 安全记录同步 ---
         async function syncSecurityRecord() { if (!user) return; try { const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'security', user.uid)); securityRecord = snap.exists() ? snap.data() : { failedAttempts: 0, lockoutUntil: 0 }; } catch(e) {} }
 
-        // --- 1. 登录验证 ---
+        // --- 2. 登录验证 ---
         window.submitAuth = async (e) => {
             if (e && e.preventDefault) e.preventDefault();
             const input = document.getElementById('admin-password-input').value, now = Date.now();
@@ -246,7 +248,7 @@
                 let attempts = (securityRecord?.failedAttempts || 0) + 1;
                 let lockoutTime = attempts >= 5 ? now + LOCKOUT_MS : 0;
                 await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
-                alert(lockoutTime > 0 ? "输错5次！锁定 5 分钟。" : `暗号错误。还剩 ${5 - attempts} 次。`); await syncSecurityRecord();
+                alert(lockoutTime > 0 ? "输错5次！已锁定。" : `暗号错误。还剩 ${5 - attempts} 次。`); await syncSecurityRecord();
             }
         };
 
@@ -258,10 +260,9 @@
                 if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); setTimeout(()=>document.getElementById('admin-password-input')?.focus(), 150); }
             } 
         };
-
         window.closeAuthModal = () => { const m = document.getElementById('auth-modal'); m?.classList.add('hidden'); m?.classList.remove('flex'); document.getElementById('admin-password-input').value = ""; };
 
-        // --- 2. 路由 (守卫拦截直接访问) ---
+        // --- 3. 路由管理 ---
         window.showView = (v, id = null) => { location.hash = `#/${v}${id ? '/' + id : ''}`; };
         const updateUIFromHash = () => {
             const parts = location.hash.replace(/^#\//, '').split('/');
@@ -270,12 +271,10 @@
             if ((view === 'admin' || view === 'editor') && !isAuth) { location.hash = '#/home'; window.checkAdminAuth(); return; }
             ['home', 'article', 'admin', 'editor'].forEach(x => document.getElementById(x + '-view')?.classList.add('hidden-view'));
             const target = document.getElementById(view + '-view'); if(target) target.classList.remove('hidden-view');
-            
             if (view === 'article' && id) {
                 currentArticleId = id; const a = articles.find(x => x.id === id);
                 if(a) { 
                     const el = document.getElementById('article-detail-content');
-                    // 文章内页：展示完整日期时间（带秒）
                     if(el) el.innerHTML = `<h1 class="text-4xl font-extrabold mb-4 leading-tight">${a.title}</h1><div class="text-slate-400 text-sm mb-12 font-bold uppercase tracking-widest text-left">📅 发布于 ${a.date}</div><div class="content-body text-left text-balance">${a.content}</div>`;
                     renderComments();
                 }
@@ -284,7 +283,31 @@
         };
         window.addEventListener('hashchange', updateUIFromHash);
 
-        // --- 3. 数据监听与排序逻辑 (修正置顶排序 bug) ---
+        // --- 4. 附件处理 ---
+        const processImageFile = (file) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image(); img.src = event.target.result;
+                img.onload = () => {
+                    const cvs = document.createElement('canvas'); let w = img.width, h = img.height;
+                    if (w > 1000) { h = (1000 / w) * h; w = 1000; }
+                    cvs.width = w; cvs.height = h;
+                    cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+                    insertPlaceholder(cvs.toDataURL('image/jpeg', 0.7), "图片");
+                };
+            };
+            reader.readAsDataURL(file);
+        };
+        const insertPlaceholder = (realCode, typeName, fileName = '') => {
+            const textarea = document.getElementById('post-content');
+            const count = Object.keys(window.tempMediaMap).length + 1, placeholder = `[[${typeName}${count}]]`;
+            window.tempMediaMap[placeholder] = typeName === "图片" ? `<img src="${realCode}">` : `<a href="${realCode}" download="${fileName}">附件：${fileName}</a>`;
+            const s = textarea.selectionStart, e = textarea.selectionEnd;
+            textarea.value = textarea.value.substring(0, s) + placeholder + textarea.value.substring(e);
+            alert(`已生成短标签：${placeholder}`);
+        };
+
+        // --- 5. 数据核心监听 ---
         function startSettingsListener() {
             onSnapshot(settingsDoc, s => {
                 const d = s.exists() ? s.data() : {};
@@ -297,28 +320,38 @@
                 const contactBtn = document.getElementById('nav-contact-btn'); if(contactBtn) { let url = (d.contactLink || '').trim(); if(url && !url.startsWith('http')) url = 'https://' + url; contactBtn.href = url || '#'; }
             });
         }
+        
+        // 核心修复：保存站点配置的逻辑
+        window.saveSettings = async () => {
+            const btn = document.getElementById('save-settings-btn'); btn.innerText = "同步中..."; btn.disabled = true;
+            try { 
+                await setDoc(settingsDoc, { 
+                    siteTitle: document.getElementById('set-site-title').value, 
+                    welcomeTitle: document.getElementById('set-welcome-title').value, 
+                    welcomeDesc: document.getElementById('set-welcome-desc').value, 
+                    contactLink: document.getElementById('set-contact-link').value, 
+                    tag1: document.getElementById('set-tag1').value, 
+                    tag2: document.getElementById('set-tag2').value 
+                }); 
+                btn.innerText = "保存成功"; 
+                setTimeout(()=> { btn.disabled=false; btn.innerText = "保存修改并同步"; }, 2000); 
+            } catch(e) { btn.disabled = false; btn.innerText = "保存失败"; }
+        };
 
         function startDataListener() {
             onSnapshot(articlesCol, s => {
                 articles = s.docs.map(d => ({id: d.id, ...d.data()}));
-                
-                // --- 核心修复：多重排序 (置顶优先 -> 时间由新到旧) ---
                 articles.sort((a, b) => {
-                    // 1. 置顶判断：a 已经置顶而 b 没有，a 排在前面 (-1)
                     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-                    
-                    // 2. 时间判断：越新越靠前 (毫秒数大的减小的)
                     const timeA = a.updatedAt?.toMillis() || new Date(a.date?.replace(/\./g,'-').replace(/\s.+/,'')).getTime() || 0;
                     const timeB = b.updatedAt?.toMillis() || new Date(b.date?.replace(/\./g,'-').replace(/\s.+/,'')).getTime() || 0;
                     return timeB - timeA;
                 });
 
-                // 首页列表：支持左文右图布局
                 document.getElementById('article-list').innerHTML = articles.map(a => {
                     const imgMatch = a.content.match(/<img[^>]+src="([^">]+)"/);
                     const firstImg = imgMatch ? imgMatch[1] : null;
                     const displayDay = a.date ? a.date.split(' ')[0] : '';
-
                     return `
                     <div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer text-left relative overflow-hidden">
                         <div class="flex justify-between gap-6">
@@ -336,55 +369,21 @@
                     </div>`;
                 }).join('');
 
-                // 管理后台
-                document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400 text-left">博文列表 (${articles.length})</div>` + 
-                articles.map(a => `
+                document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400 text-left">博文列表 (${articles.length})</div>` + articles.map(a => `
                     <div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition text-left">
-                        <span class="font-bold text-slate-700 text-sm truncate mr-4 flex items-center gap-2 text-balance text-left">
-                            ${a.isPinned ? '<span class="text-indigo-600">📌</span>' : ''} ${a.title}
-                        </span>
+                        <span class="font-bold text-slate-700 text-sm truncate mr-4 flex items-center gap-2 text-balance text-left">${a.isPinned ? '<span class="text-indigo-600">📌</span>' : ''} ${a.title}</span>
                         <div class="space-x-4 shrink-0 flex items-center">
                             <button onclick="window.togglePin('${a.id}', ${!!a.isPinned})" class="text-[10px] font-bold ${a.isPinned ? 'text-slate-400' : 'text-indigo-600'} uppercase">${a.isPinned ? '取消置顶' : '置顶'}</button>
                             <button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button>
                             <button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs text-balance">删除</button>
                         </div>
                     </div>`).join('');
-                
                 if (location.hash.includes('article')) updateUIFromHash();
             });
         }
 
-        window.togglePin = async (id, currentPinned) => {
-            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id), { isPinned: !currentPinned }); } catch (e) { alert("操作失败"); }
-        };
+        window.togglePin = async (id, currentPinned) => { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id), { isPinned: !currentPinned }); } catch (e) { alert("失败"); } };
 
-        // --- 4. 附件处理与编辑器 ---
-        const handleFileUpload = (e, type) => {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (type === 'image') {
-                    const img = new Image(); img.src = event.target.result;
-                    img.onload = () => {
-                        const cvs = document.createElement('canvas'); let w = img.width, h = img.height;
-                        if (w > 1000) { h = (1000 / w) * h; w = 1000; }
-                        cvs.width = w; cvs.height = h;
-                        cvs.getContext('2d').drawImage(img, 0, 0, w, h);
-                        insertPlaceholder(cvs.toDataURL('image/jpeg', 0.7), "图片");
-                    };
-                } else { if (file.size > 500000) return alert("太大！"); insertPlaceholder(event.target.result, "文件", file.name); }
-                e.target.value = '';
-            };
-            reader.readAsDataURL(file);
-        };
-        const insertPlaceholder = (realCode, typeName, fileName = '') => {
-            const textarea = document.getElementById('post-content');
-            const count = Object.keys(window.tempMediaMap).length + 1, placeholder = `[[${typeName}${count}]]`;
-            window.tempMediaMap[placeholder] = typeName === "图片" ? `<img src="${realCode}">` : `<a href="${realCode}" download="${fileName}">附件：${fileName}</a>`;
-            const s = textarea.selectionStart, e = textarea.selectionEnd;
-            textarea.value = textarea.value.substring(0, s) + placeholder + textarea.value.substring(e);
-            alert(`已生成短标签：${placeholder}`);
-        };
         window.openEditor = (id = null) => {
             window.tempMediaMap = {};
             if(id){
@@ -406,11 +405,11 @@
             for (const [p, r] of Object.entries(window.tempMediaMap)) finalContent = finalContent.replace(p, r);
             const dateStr = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g,'.');
             const data = { title: document.getElementById('post-title').value, date: dateStr, summary: document.getElementById('post-summary').value, content: finalContent, updatedAt: Timestamp.now() };
-            try { if(document.getElementById('edit-id').value) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', document.getElementById('edit-id').value), data); else await addDoc(articlesCol, { ...data, isPinned: false }); window.showView('admin'); } catch (err) { alert("同步失败！"); } finally { btn.disabled = false; }
+            try { if(document.getElementById('edit-id').value) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', document.getElementById('edit-id').value), data); else await addDoc(articlesCol, { ...data, isPinned: false }); window.showView('admin'); } catch (err) { alert("同步失败！内容过大！"); } finally { btn.disabled = false; }
         };
         window.deletePost = id => { if(confirm("确定永久删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
-        // --- 5. 评论与辅助系统 ---
+        // --- 6. 评论系统与倒计时 ---
         function startCommentsListener() { onSnapshot(commentsCol, s => { comments = s.docs.map(d => ({id: d.id, ...d.data()})); if (currentArticleId) renderComments(); }); }
         window.deleteComment = async (id) => { if(confirm("删除评论？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
         function renderComments() {
@@ -454,15 +453,37 @@
         ['yearsInput','rateInput','inputPrincipal','inputMonthly'].forEach(id => document.getElementById(id)?.addEventListener('input', (e) => { const vEl = document.getElementById(id.replace('Input','Val')); if(vEl) vEl.innerText = e.target.value; renderChart(); }));
 
         window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; document.getElementById('nav-admin-link').classList.add('hidden'); window.showView('home'); };
-        onAuthStateChanged(auth, async (u) => { user = u; if (user) { startDataListener(); startSettingsListener(); startCommentsListener(); await syncSecurityRecord(); if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { isAdminAuthenticated = true; document.getElementById('nav-admin-link')?.classList.remove('hidden'); } } });
+        onAuthStateChanged(auth, async (u) => { user = u; if (user) { startDataListener(); startSettingsListener(); startCommentsListener(); await syncSecurityRecord(); if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { isAdminAuthenticated = true; } } });
         (async () => { try { await signInAnonymously(auth); } catch (e) { document.getElementById('fatal-error-overlay').style.display = 'flex'; } })();
+
         window.addEventListener('load', () => { 
-            document.getElementById('login-form')?.addEventListener('submit', window.submitAuth);
-            document.getElementById('admin-password-input')?.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); window.submitAuth(); } });
-            document.getElementById('image-upload')?.addEventListener('change', (e)=>handleFileUpload(e,'image'));
-            document.getElementById('file-upload')?.addEventListener('change', (e)=>handleFileUpload(e,'file'));
+            const form = document.getElementById('login-form');
+            if (form) {
+                form.addEventListener('submit', window.submitAuth);
+                document.getElementById('admin-password-input')?.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); window.submitAuth(); } });
+            }
+            document.getElementById('image-upload')?.addEventListener('change', (e)=>processImageFile(e.target.files[0]));
+            document.getElementById('file-upload')?.addEventListener('change', (e)=> {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader(); reader.onload = (ev) => insertPlaceholder(ev.target.result, "文件", file.name);
+                reader.readAsDataURL(file); e.target.value = '';
+            });
+
+            // 监听粘贴事件
+            document.getElementById('post-content')?.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (const item of items) {
+                    if (item.type.indexOf('image') !== -1) {
+                        e.preventDefault();
+                        const file = item.getAsFile();
+                        processImageFile(file);
+                    }
+                }
+            });
+
             if (location.hash) updateUIFromHash(); renderChart(); 
         });
+
         setInterval(() => { 
             const tgt = new Date('2026-12-20'), start = new Date('2026-01-01'), now = new Date(); const days = Math.ceil((tgt-now)/86400000); const pct = Math.min(100, Math.max(0, ((now-start)/(tgt-start))*100)); 
             const cEl = document.getElementById('countdown'); if(cEl) cEl.innerText = days + ' 天';
