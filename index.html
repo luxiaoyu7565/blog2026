@@ -11,15 +11,14 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; }
         .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        .canvas-container { position: relative; width: 100%; height: 260px; cursor: crosshair; }
-        input[type=range] { accent-color: #4f46e5; }
+        .canvas-container { position: relative; width: 100%; height: 260px; }
         .hidden-view { display: none; opacity: 0; }
         .view-content { transition: opacity 0.3s ease-in-out; }
         #fatal-error-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-enter { animation: modalIn 0.3s ease-out; }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
-        /* 文章内容显示样式 */
+        /* 文章内容增强：支持图片和链接 */
         .content-body img { max-width: 100%; height: auto; border-radius: 1rem; margin: 1.5rem 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: block; }
         .content-body a { color: #4f46e5; text-decoration: underline; font-weight: 600; }
         
@@ -31,16 +30,17 @@
             width: 100%;
         }
 
-        /* 评论卡片样式 */
+        /* 评论卡片：右上角排版 */
         .comment-card {
-            @apply bg-white p-5 rounded-2xl border border-slate-100 mb-4 transition-all hover:border-indigo-100 hover:shadow-sm relative;
+            @apply bg-white p-5 rounded-2xl border border-slate-100 mb-4 transition-all hover:border-indigo-100 hover:shadow-sm relative text-left;
         }
         .comment-header { @apply flex justify-between items-start mb-2; }
-        .comment-delete-btn { @apply text-slate-300 hover:text-red-500 transition-colors cursor-pointer border-none outline-none bg-transparent flex items-center justify-center p-1 ml-1; }
+        .comment-delete-btn { @apply text-slate-300 hover:text-red-500 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center p-1; }
     </style>
 </head>
 <body class="text-slate-800 text-left">
 
+    <!-- Firebase 权限报错 -->
     <div id="fatal-error-overlay">
         <div class="bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl text-center modal-enter">
             <h3 class="text-xl font-bold text-slate-900 mb-4">云端连接受阻</h3>
@@ -49,17 +49,17 @@
         </div>
     </div>
 
-    <!-- 登录验证弹窗 -->
-    <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 text-left">
+    <!-- 管理员登录弹窗 -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 text-left">
         <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter">
             <h3 class="text-xl font-bold mb-2 text-slate-900 text-center">身份确认</h3>
             <p class="text-slate-500 text-xs mb-6 text-center" id="auth-hint">请输入管理员暗号进入后台</p>
-            <form id="login-form">
+            <form id="login-form" onsubmit="event.preventDefault(); window.submitAuth();">
                 <div class="space-y-6 text-left">
                     <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="暗号..." autocomplete="current-password">
                     <div class="flex gap-3">
                         <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-sm">确定 (Enter)</button>
-                        <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm">取消 (Esc)</button>
+                        <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm">取消</button>
                     </div>
                 </div>
             </form>
@@ -67,22 +67,20 @@
     </div>
 
     <!-- 导航栏 -->
-    <nav class="sticky top-0 z-50 glass-card py-4 px-6 mb-8 shadow-sm text-left">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
+    <nav class="sticky top-0 z-50 glass-card py-4 px-6 mb-8 shadow-sm">
+        <div class="max-w-6xl mx-auto flex justify-between items-center text-left">
             <h1 onclick="window.handleLogoClick()" id="nav-site-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent cursor-pointer select-none">STRIVE 2026</h1>
             <div class="space-x-6 text-sm font-medium flex items-center text-slate-600 font-bold">
                 <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition">首页</a>
-                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hidden hover:text-indigo-600 transition flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    管理中心
-                </a>
+                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hidden hover:text-indigo-600 transition flex items-center gap-1">管理中心</a>
                 <a id="nav-contact-btn" href="#" target="_blank" class="px-5 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">联系我</a>
             </div>
         </div>
     </nav>
 
     <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
-        <div class="lg:col-span-2 space-y-8 text-left text-balance">
+        <div class="lg:col-span-2 space-y-8 text-left">
+            <!-- 首页视图 -->
             <div id="home-view" class="view-content space-y-8">
                 <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden text-left">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-[5rem] -z-10 opacity-50"></div>
@@ -90,90 +88,77 @@
                     <p id="welcome-desc" class="text-slate-500 text-lg leading-relaxed mb-8 italic">数据同步中...</p>
                     <div id="welcome-tags" class="flex flex-wrap gap-3"></div>
                 </div>
-                <div class="space-y-6 text-left">
+                <div class="space-y-6">
                     <h3 class="text-xl font-bold flex items-center gap-2 text-slate-800">
-                        <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>
-                        最新博文
+                        <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>最新博文
                     </h3>
                     <div id="article-list" class="grid gap-6"></div>
                 </div>
             </div>
 
-            <div id="article-view" class="view-content hidden-view space-y-8 text-left">
+            <!-- 文章视图 -->
+            <div id="article-view" class="view-content hidden-view space-y-8 text-left text-balance">
                 <button onclick="window.showView('home')" class="group flex items-center text-sm font-bold text-slate-400 hover:text-indigo-600 transition font-bold">
                     <span class="mr-2 group-hover:-translate-x-1 transition-transform">←</span> 返回列表
                 </button>
                 <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100">
-                    <div id="article-detail-content" class="prose prose-indigo prose-lg max-w-none content-body text-balance text-left"></div>
+                    <div id="article-detail-content" class="prose prose-indigo prose-lg max-w-none content-body"></div>
                 </div>
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-8">
+                <!-- 互动评论 -->
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 text-left text-balance">
                     <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <span class="w-2 h-6 bg-emerald-500 rounded-full"></span>
-                        互动交流
+                        <span class="w-2 h-6 bg-emerald-500 rounded-full"></span>互动交流
                     </h3>
-                    <div class="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left">
-                        <input type="text" id="comment-name" placeholder="您的昵称" class="p-3 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm font-medium w-full md:w-1/2 text-left">
-                        <textarea id="comment-content" rows="3" placeholder="写下你的想法..." class="w-full p-4 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm text-left"></textarea>
-                        <button onclick="window.submitComment()" id="comment-submit-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition text-sm">发表评论</button>
+                    <div class="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                        <input type="text" id="comment-name" placeholder="您的昵称" class="p-3 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm font-medium w-full md:w-1/2">
+                        <textarea id="comment-content" rows="3" placeholder="写下你的想法..." class="w-full p-4 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm"></textarea>
+                        <button onclick="window.submitComment()" id="comment-submit-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition text-sm text-balance">发表评论</button>
                     </div>
                     <div id="comments-list" class="space-y-6"></div>
                 </div>
             </div>
 
-            <!-- 管理中心面板 -->
-            <div id="admin-view" class="view-content hidden-view space-y-8 text-left text-balance">
-                <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-left">
-                    <h2 class="text-2xl font-bold text-slate-800">管理中心</h2>
+            <!-- 管理中心视图 -->
+            <div id="admin-view" class="view-content hidden-view space-y-8 text-left">
+                <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-balance">
+                    <h2 class="text-2xl font-bold text-slate-800">管理后台</h2>
                     <div class="flex gap-2">
                         <button onclick="window.logoutAdmin()" class="px-4 py-2 bg-slate-50 text-slate-400 rounded-xl text-sm font-bold">注销</button>
                         <button onclick="window.openEditor()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg">+ 发布内容</button>
                     </div>
                 </div>
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6 text-left text-balance">
-                    <h3 class="font-bold text-sm uppercase tracking-tighter text-indigo-600 text-left text-balance">全局文字配置</h3>
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                    <h3 class="font-bold text-sm uppercase tracking-tighter text-indigo-600">全局文字配置</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 ml-2">站点 Logo 名字</label>
-                            <input type="text" id="set-site-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-slate-400 ml-2">联系链接 (微信/网址)</label>
-                            <input type="text" id="set-contact-link" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
-                        </div>
+                        <input type="text" id="set-site-title" placeholder="Logo 名字" class="p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                        <input type="text" id="set-contact-link" placeholder="联系链接" class="p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
                     </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-400 ml-2">主页大标题 (你好 👋)</label>
-                        <input type="text" id="set-welcome-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-400 ml-2">主页详细介绍文字</label>
-                        <textarea id="set-welcome-desc" rows="2" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
-                    </div>
+                    <input type="text" id="set-welcome-title" placeholder="大标题" class="w-full p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
+                    <textarea id="set-welcome-desc" rows="2" placeholder="主页详细介绍" class="w-full p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="set-tag1" placeholder="标签1" class="p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
-                        <input type="text" id="set-tag2" placeholder="标签2" class="p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                        <input type="text" id="set-tag1" placeholder="标签1" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
+                        <input type="text" id="set-tag2" placeholder="标签2" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
                     </div>
-                    <button onclick="window.saveSettings()" id="save-settings-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl hover:bg-indigo-700 transition">保存所有修改到云端</button>
+                    <button onclick="window.saveSettings()" id="save-settings-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl hover:bg-indigo-700 transition text-balance">保存修改并同步</button>
                 </div>
-                <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-left" id="admin-table-body"></div>
+                <div id="admin-table-body" class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-balance"></div>
             </div>
 
-            <!-- 编辑器 -->
+            <!-- 编辑器视图 -->
             <div id="editor-view" class="view-content hidden-view space-y-6 text-left">
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-left">
-                    <div class="flex justify-between items-center mb-8 text-left">
-                        <h3 id="editor-title" class="text-2xl font-bold text-slate-800 text-left">博文创作</h3>
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 id="editor-title" class="text-2xl font-bold text-slate-800">博文创作</h3>
                         <div class="flex gap-2">
-                            <label class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full cursor-pointer hover:bg-indigo-100 transition">🖼️ 插入图片<input type="file" id="image-upload" accept="image/*" class="hidden"></label>
-                            <label class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full cursor-pointer hover:bg-emerald-100 transition">📎 插入文件<input type="file" id="file-upload" class="hidden"></label>
+                            <label class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full cursor-pointer hover:bg-indigo-100 transition">🖼️ 插图<input type="file" id="image-upload" accept="image/*" class="hidden"></label>
+                            <label class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full cursor-pointer hover:bg-emerald-100 transition">📎 附件<input type="file" id="file-upload" class="hidden"></label>
                         </div>
                     </div>
-                    <div class="space-y-4">
+                    <div class="space-y-4 text-balance">
                         <input type="hidden" id="edit-id">
                         <input type="text" id="post-title" placeholder="文章标题" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none text-xl font-bold" required>
-                        <textarea id="post-summary" placeholder="摘要（首页显示）" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-bold" required></textarea>
-                        <div class="text-[10px] text-slate-400 ml-2 mb-1 font-bold">提示：插入图片会变成 [[图片1]]，发布后自动生成。</div>
-                        <textarea id="post-content" placeholder="在这里写下文字..." rows="18" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-mono text-sm leading-relaxed text-left" required></textarea>
+                        <textarea id="post-summary" placeholder="首页摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-bold" required></textarea>
+                        <textarea id="post-content" placeholder="正文内容..." rows="18" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-mono text-sm leading-relaxed" required></textarea>
                         <div class="flex gap-4 pt-4">
                             <button type="button" onclick="window.submitPost()" id="post-submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl">发布同步</button>
                             <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold">返回</button>
@@ -183,46 +168,27 @@
             </div>
         </div>
 
-        <div class="space-y-8 text-left">
-            <!-- 考研倒计时 -->
-            <div class="bg-indigo-600 text-white p-8 rounded-[2rem] shadow-lg relative overflow-hidden shadow-indigo-200 text-left">
+        <div class="space-y-8 text-left text-balance">
+            <div class="bg-indigo-600 text-white p-8 rounded-[2rem] shadow-lg relative overflow-hidden shadow-indigo-200">
                 <h3 class="font-bold mb-4 text-xs uppercase opacity-70 tracking-widest text-left">考研 2026 倒计时</h3>
-                <div class="text-6xl font-bold mb-6 tabular-nums" id="countdown">...</div>
-                <div class="w-full bg-indigo-500 rounded-full h-2.5 mb-4 shadow-inner text-left">
+                <div class="text-6xl font-bold mb-6 tabular-nums text-left" id="countdown">...</div>
+                <div class="w-full bg-indigo-500 rounded-full h-2.5 mb-4 shadow-inner">
                     <div id="progress-bar" class="bg-white h-2.5 rounded-full transition-all duration-1000 shadow-sm"></div>
                 </div>
-                <p class="text-[10px] font-bold opacity-90 text-indigo-50" id="progress-text">目标：2026年12月20日</p>
+                <!-- 修复：百分比显示 -->
+                <p class="text-[10px] font-bold opacity-90 text-indigo-50 text-left" id="progress-text">已完成 2026 奋斗进度...</p>
             </div>
 
-            <!-- 复利模拟器 -->
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-center text-left">
-                <h3 class="font-bold text-slate-900 mb-6 flex justify-between items-center text-sm uppercase tracking-tighter text-left">
-                    复利模拟器
-                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-bold">V2.2</span>
-                </h3>
-                <div class="canvas-container mb-6 group text-left">
-                    <canvas id="compoundCanvas"></canvas>
-                    <div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 border border-white/10 whitespace-nowrap min-w-[140px] text-left"></div>
-                </div>
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-center">
+                <h3 class="font-bold text-slate-900 mb-6 flex justify-between items-center text-sm uppercase tracking-tighter text-left text-balance">复利模拟器 <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-bold">V2.2</span></h3>
+                <div class="canvas-container mb-6 group text-left text-balance"><canvas id="compoundCanvas"></canvas><div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 border border-white/10 whitespace-nowrap min-w-[140px] text-left"></div></div>
                 <div class="space-y-5 text-left text-balance">
-                    <div class="grid grid-cols-2 gap-x-2 text-left">
-                        <div class="flex flex-col items-start text-left">
-                            <label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">本金</label>
-                            <input type="number" id="inputPrincipal" value="10000" class="number-input">
-                        </div>
-                        <div class="flex flex-col items-start text-left">
-                            <label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">定投</label>
-                            <input type="number" id="inputMonthly" value="2000" class="number-input">
-                        </div>
+                    <div class="grid grid-cols-2 gap-x-2">
+                        <div class="flex flex-col items-start"><label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">本金</label><input type="number" id="inputPrincipal" value="10000" class="number-input"></div>
+                        <div class="flex flex-col items-start"><label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">定投</label><input type="number" id="inputMonthly" value="2000" class="number-input"></div>
                     </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-[11px] font-bold text-left"><span>年限</span><span class="text-indigo-600 font-mono"><span id="yearsVal">20</span> 年</span></div>
-                        <input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer text-left">
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-[11px] font-bold text-left"><span>预期收益</span><span class="text-indigo-600 font-mono"><span id="rateVal">8</span>%</span></div>
-                        <input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer text-left">
-                    </div>
+                    <div class="space-y-2"><div class="flex justify-between text-[11px] font-bold text-left"><span>年限</span><span class="text-indigo-600 font-mono text-left"><span id="yearsVal">20</span> 年</span></div><input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer"></div>
+                    <div class="space-y-2"><div class="flex justify-between text-[11px] font-bold text-left text-balance"><span>预期收益</span><span class="text-indigo-600 font-mono text-left"><span id="rateVal">8</span>%</span></div><input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer"></div>
                 </div>
                 <div class="mt-8 pt-6 border-t border-slate-50 text-center">
                     <div class="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-widest text-left">预期最终资产</div>
@@ -237,103 +203,82 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- 核心配置 ---
         const ADMIN_MASK = "WFlGeHlmMTIzNDU2QA=="; 
-        const PERSIST_KEY = "luxiaoyu_blog_persistence_final_v11"; 
-        const MAX_ATTEMPTS = 5;
+        const PERSIST_KEY = "luxiaoyu_blog_persistence_v11_stable"; 
         const LOCKOUT_MS = 5 * 60 * 1000;
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU",
-            authDomain: "blog-6dd2d.firebaseapp.com",
-            projectId: "blog-6dd2d",
-            storageBucket: "blog-6dd2d.firebasestorage.app",
-            messagingSenderId: "232992420063",
-            appId: "1:232992420063:web:4afa71559dbf14ed47f96a",
-            measurementId: "G-JV2BY25CFH"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = 'blog-6dd2d'; 
-        
+        const fbConfig = { apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU", authDomain: "blog-6dd2d.firebaseapp.com", projectId: "blog-6dd2d", storageBucket: "blog-6dd2d.firebasestorage.app", messagingSenderId: "232992420063", appId: "1:232992420063:web:4afa71559dbf14ed47f96a", measurementId: "G-JV2BY25CFH" };
+        const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const appId = 'blog-6dd2d';
         const articlesCol = collection(db, 'artifacts', appId, 'public', 'data', 'articles');
         const settingsDoc = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
         const securityCol = collection(db, 'artifacts', appId, 'public', 'data', 'security');
         const commentsCol = collection(db, 'artifacts', appId, 'public', 'data', 'comments');
 
-        let isAdminAuthenticated = false;
-        let articles = [];
-        let comments = [];
-        let currentArticleId = null;
-        let user = null;
-        let logoClickCount = 0;
-        let securityRecord = null;
-        let chartData = [];
+        let isAdminAuthenticated = false, articles = [], comments = [], currentArticleId = null, user = null, securityRecord = null, chartData = [];
         window.tempMediaMap = {};
 
-        // --- 核心同步：从云端拉取安全记录 (修复 ReferenceError) ---
+        // --- 1. 核心修复：同步锁定记录 (定义在最前) ---
         async function syncSecurityRecord() { 
             if (!user) return; 
             try { 
-                const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'security', user.uid)); 
-                securityRecord = docSnap.exists() ? docSnap.data() : { failedAttempts: 0, lockoutUntil: 0 }; 
-            } catch (e) {
-                console.error("Security sync failed:", e);
-            } 
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'security', user.uid)); 
+                securityRecord = snap.exists() ? snap.data() : { failedAttempts: 0, lockoutUntil: 0 }; 
+            } catch(e) {} 
         }
 
-        // --- 占位符逻辑 ---
-        const handleFileUpload = (e, type) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (type === 'image') {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let w = img.width, h = img.height;
-                        if (w > 1000) { h = (1000 / w) * h; w = 1000; }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        const base64 = canvas.toDataURL('image/jpeg', 0.7);
-                        insertPlaceholder(base64, "图片");
-                    };
-                } else {
-                    if (file.size > 500000) return alert("文件过大！");
-                    insertPlaceholder(event.target.result, "文件", file.name);
+        // --- 2. 登录验证逻辑 ---
+        window.submitAuth = async (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            const input = document.getElementById('admin-password-input').value, now = Date.now();
+            await syncSecurityRecord();
+            if (securityRecord?.lockoutUntil > now) return alert(`系统锁定中...`);
+            if (btoa(input) === ADMIN_MASK) { 
+                isAdminAuthenticated = true; localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
+                await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
+                window.closeAuthModal(); window.showView('admin');
+                document.getElementById('nav-admin-link')?.classList.remove('hidden');
+            } else {
+                let attempts = (securityRecord?.failedAttempts || 0) + 1;
+                let lockoutTime = attempts >= 5 ? now + LOCKOUT_MS : 0;
+                await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
+                alert(lockoutTime > 0 ? "输错5次！锁定 5 分钟。" : `暗号错误，还剩 ${5 - attempts} 次机会。`); await syncSecurityRecord();
+            }
+        };
+
+        window.checkAdminAuth = () => { 
+            if (isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { 
+                isAdminAuthenticated = true; window.showView('admin'); 
+            } else { 
+                const modal = document.getElementById('auth-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    setTimeout(()=>document.getElementById('admin-password-input')?.focus(), 150); 
                 }
-                e.target.value = '';
-            };
-            reader.readAsDataURL(file);
+            } 
         };
 
-        const insertPlaceholder = (realCode, typeName, fileName = '') => {
-            const textarea = document.getElementById('post-content');
-            const count = Object.keys(window.tempMediaMap).length + 1;
-            const placeholder = `[[${typeName}${count}]]`;
-            window.tempMediaMap[placeholder] = typeName === "图片" ? `<img src="${realCode}">` : `<a href="${realCode}" download="${fileName}">附件：${fileName}</a>`;
-            const start = textarea.selectionStart, end = textarea.selectionEnd;
-            textarea.value = textarea.value.substring(0, start) + placeholder + textarea.value.substring(end);
-            alert(`已生成短标签：${placeholder}。`);
+        window.closeAuthModal = () => { 
+            const modal = document.getElementById('auth-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                const input = document.getElementById('admin-password-input');
+                if (input) input.value = ""; 
+            }
         };
 
-        // --- 路由系统 ---
-        window.showView = (v, id = null) => { let hash = `#/${v}`; if (id) hash += `/${id}`; location.hash = hash; };
+        // --- 3. 路由与视图管理 ---
+        window.showView = (v, id = null) => { location.hash = `#/${v}${id ? '/' + id : ''}`; };
         const updateUIFromHash = () => {
-            const hashPath = location.hash.replace(/^#\//, '');
-            const parts = hashPath.split('/');
+            const parts = location.hash.replace(/^#\//, '').split('/');
             const view = parts[0] || 'home', id = parts[1] || null;
             ['home', 'article', 'admin', 'editor'].forEach(x => document.getElementById(x + '-view')?.classList.add('hidden-view'));
             const target = document.getElementById(view + '-view'); if(target) target.classList.remove('hidden-view');
             if (view === 'article' && id) {
                 currentArticleId = id; const a = articles.find(x => x.id === id);
-                if(a) {
+                if(a) { 
                     const el = document.getElementById('article-detail-content');
-                    if(el) el.innerHTML = `<h1 class="text-4xl font-extrabold mb-4 leading-tight">${a.title}</h1><div class="text-slate-400 text-sm mb-12 font-bold uppercase tracking-widest text-left">📅 发布于 ${a.date}</div><div class="content-body text-balance text-left">${a.content}</div>`;
+                    if(el) el.innerHTML = `<h1 class="text-4xl font-extrabold mb-4 leading-tight">${a.title}</h1><div class="text-slate-400 text-sm mb-12 font-bold uppercase tracking-widest text-left">📅 发布于 ${a.date}</div><div class="content-body text-left text-balance">${a.content}</div>`;
                     renderComments();
                 }
             } else currentArticleId = null;
@@ -341,157 +286,141 @@
         };
         window.addEventListener('hashchange', updateUIFromHash);
 
-        // --- 登录验证 ---
-        window.submitAuth = async (e) => {
-            if (e && e.preventDefault) e.preventDefault();
-            const inputEl = document.getElementById('admin-password-input');
-            const input = inputEl.value, now = Date.now();
-            await syncSecurityRecord();
-            if (securityRecord && securityRecord.lockoutUntil > now) return alert(`系统锁定中...`);
-            if (btoa(input) === ADMIN_MASK) { 
-                isAdminAuthenticated = true; localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
-                await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
-                window.closeAuthModal(); window.showView('admin'); renderComments();
-                document.getElementById('nav-admin-link')?.classList.remove('hidden');
-            } else {
-                let attempts = (securityRecord ? securityRecord.failedAttempts : 0) + 1;
-                let lockoutTime = attempts >= MAX_ATTEMPTS ? now + LOCKOUT_MS : 0;
-                await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
-                alert(lockoutTime > 0 ? "输错5次！已锁定。" : "暗号错误"); await syncSecurityRecord();
-            }
-        };
-
-        window.checkAdminAuth = () => {
-            if (isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { isAdminAuthenticated = true; window.showView('admin'); return; }
-            document.getElementById('auth-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('admin-password-input')?.focus(), 200);
-        };
-        window.closeAuthModal = () => { document.getElementById('auth-modal')?.classList.add('hidden'); document.getElementById('admin-password-input').value = ""; };
-
-        // --- 数据监听 (核心：修复主页配置读取) ---
+        // --- 4. 数据核心监听 (修复空文字) ---
         function startSettingsListener() {
             onSnapshot(settingsDoc, s => {
                 const d = s.exists() ? s.data() : {};
+                // 更新主页标题
                 document.getElementById('nav-site-title').innerText = d.siteTitle || 'STRIVE 2026';
-                const wt = document.getElementById('welcome-title'); if(wt) wt.innerText = d.welcomeTitle || '你好 👋';
-                const wd = document.getElementById('welcome-desc'); if(wd) wd.innerText = d.welcomeDesc || '努力加载中...';
-                const tagsEl = document.getElementById('welcome-tags'); if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${d.tag1 || '# 2026'}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${d.tag2 || '# 奋斗'}</span>`;
+                document.getElementById('welcome-title').innerText = d.welcomeTitle || '你好 👋';
+                document.getElementById('welcome-desc').innerText = d.welcomeDesc || '正在同步云端...';
                 
-                // 修复：手动映射 ID 确保读取正确
-                const map = {'set-site-title':'siteTitle','set-welcome-title':'welcomeTitle','set-welcome-desc':'welcomeDesc','set-contact-link':'contactLink','set-tag1':'tag1','set-tag2':'tag2'};
-                for (let [id, key] of Object.entries(map)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
+                // 更新管理后台输入框内容
+                const mapping = {'set-site-title':'siteTitle','set-welcome-title':'welcomeTitle','set-welcome-desc':'welcomeDesc','set-contact-link':'contactLink','set-tag1':'tag1','set-tag2':'tag2'};
+                for (let [id, key] of Object.entries(mapping)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
+                
+                // 更新标签
+                const tagsEl = document.getElementById('welcome-tags'); 
+                if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${d.tag1 || '# 2026'}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${d.tag2 || '# 奋斗'}</span>`;
+                
+                // 更新联系按钮
+                const contactBtn = document.getElementById('nav-contact-btn'); 
+                if(contactBtn) { let url = (d.contactLink || '').trim(); if(url && !url.startsWith('http') && !url.startsWith('mailto:')) url = 'https://' + url; contactBtn.href = url || '#'; }
             });
         }
-
         window.saveSettings = async () => {
             const btn = document.getElementById('save-settings-btn'); btn.innerText = "同步中..."; btn.disabled = true;
-            try { await setDoc(settingsDoc, { siteTitle: document.getElementById('set-site-title').value, welcomeTitle: document.getElementById('set-welcome-title').value, welcomeDesc: document.getElementById('set-welcome-desc').value, contactLink: document.getElementById('set-contact-link').value, tag1: document.getElementById('set-tag1').value, tag2: document.getElementById('set-tag2').value }); btn.innerText = "保存同步"; setTimeout(() => { btn.innerText = "保存并更新"; btn.disabled = false; }, 2000); } catch(e) { btn.disabled = false; }
+            try { await setDoc(settingsDoc, { siteTitle: document.getElementById('set-site-title').value, welcomeTitle: document.getElementById('set-welcome-title').value, welcomeDesc: document.getElementById('set-welcome-desc').value, contactLink: document.getElementById('set-contact-link').value, tag1: document.getElementById('set-tag1').value, tag2: document.getElementById('set-tag2').value }); btn.innerText = "保存同步"; setTimeout(()=>btn.disabled=false, 2000); } catch(e) { btn.disabled = false; }
         };
-
         function startDataListener() {
             onSnapshot(articlesCol, s => {
                 articles = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date?.replace(/\./g,'-')) - new Date(a.date?.replace(/\./g,'-')));
                 document.getElementById('article-list').innerHTML = articles.map(a => `<div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer text-left"><h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors text-balance">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed text-balance">${a.summary}</p><div class="text-indigo-600 mt-6 text-xs font-bold uppercase tracking-widest flex items-center font-bold">READ FULL STORY →</div></div>`).join('');
-                document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400">文章管理 (${articles.length})</div>` + articles.map(a => `<div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition text-left"><span class="font-bold text-slate-700 text-sm truncate mr-4 text-left">${a.title}</span><div class="space-x-4 shrink-0 text-left flex items-center"><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs">删除</button></div></div>`).join('');
+                document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400">博文管理 (${articles.length})</div>` + articles.map(a => `<div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition text-left"><span class="font-bold text-slate-700 text-sm truncate mr-4 text-left">${a.title}</span><div class="space-x-4 shrink-0 flex items-center"><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs">删除</button></div></div>`).join('');
                 if (location.hash.includes('article')) updateUIFromHash();
             });
         }
 
+        // --- 5. 占位符与编辑器 ---
+        const handleFileUpload = (e, type) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (type === 'image') {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = () => {
+                        const cvs = document.createElement('canvas'); let w = img.width, h = img.height;
+                        if (w > 1000) { h = (1000 / w) * h; w = 1000; }
+                        cvs.width = w; cvs.height = h;
+                        cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+                        insertPlaceholder(cvs.toDataURL('image/jpeg', 0.7), "图片");
+                    };
+                } else { if (file.size > 500000) return alert("附件过大！"); insertPlaceholder(event.target.result, "文件", file.name); }
+                e.target.value = '';
+            };
+            reader.readAsDataURL(file);
+        };
+        const insertPlaceholder = (realCode, typeName, fileName = '') => {
+            const textarea = document.getElementById('post-content');
+            const count = Object.keys(window.tempMediaMap).length + 1, placeholder = `[[${typeName}${count}]]`;
+            window.tempMediaMap[placeholder] = typeName === "图片" ? `<img src="${realCode}">` : `<a href="${realCode}" download="${fileName}">附件：${fileName}</a>`;
+            const s = textarea.selectionStart, e = textarea.selectionEnd;
+            textarea.value = textarea.value.substring(0, s) + placeholder + textarea.value.substring(e);
+            alert(`已生成短标签：${placeholder}`);
+        };
         window.openEditor = (id = null) => {
             window.tempMediaMap = {};
             if(id){
-                const a = articles.find(x => x.id === id);
-                document.getElementById('edit-id').value = a.id;
-                document.getElementById('post-title').value = a.title;
-                document.getElementById('post-summary').value = a.summary;
+                const a = articles.find(x => x.id === id); document.getElementById('edit-id').value = a.id;
+                document.getElementById('post-title').value = a.title; document.getElementById('post-summary').value = a.summary;
                 let cleanContent = a.content, idx = 1;
                 const mediaRegex = /<img src="data:image[^>]+>|<a href="data:[^>]+>[^<]+<\/a>/g;
                 let match; while ((match = mediaRegex.exec(a.content)) !== null) {
                     const placeholder = `[[${match[0].startsWith('<img') ? '图片' : '文件'}${idx}]]`;
-                    window.tempMediaMap[placeholder] = match[0];
-                    cleanContent = cleanContent.replace(match[0], placeholder); idx++;
+                    window.tempMediaMap[placeholder] = match[0]; cleanContent = cleanContent.replace(match[0], placeholder); idx++;
                 }
                 document.getElementById('post-content').value = cleanContent;
             } else { document.getElementById('edit-id').value = ""; document.getElementById('post-title').value = ""; document.getElementById('post-summary').value = ""; document.getElementById('post-content').value = ""; }
             window.showView('editor');
         };
-
         window.submitPost = async () => {
             const btn = document.getElementById('post-submit-btn'); btn.disabled = true;
             let finalContent = document.getElementById('post-content').value;
-            for (const [p, r] of Object.entries(window.tempMediaMap)) { finalContent = finalContent.replace(p, r); }
+            for (const [p, r] of Object.entries(window.tempMediaMap)) finalContent = finalContent.replace(p, r);
             const data = { title: document.getElementById('post-title').value, date: new Date().toLocaleDateString('zh-CN').replace(/\//g,'.'), summary: document.getElementById('post-summary').value, content: finalContent, updatedAt: Timestamp.now() };
-            try {
-                if(document.getElementById('edit-id').value) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', document.getElementById('edit-id').value), data);
-                else await addDoc(articlesCol, data);
-                window.showView('admin');
-            } catch (err) { alert("同步失败：博文太长啦！"); } finally { btn.disabled = false; }
+            try { if(document.getElementById('edit-id').value) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', document.getElementById('edit-id').value), data); else await addDoc(articlesCol, data); window.showView('admin'); } catch (err) { alert("同步失败！内容过大！"); } finally { btn.disabled = false; }
         };
-        window.deletePost = id => { if(confirm("确定删除？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
+        window.deletePost = id => { if(confirm("确定永久删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
-        // --- 评论管理 ---
+        // --- 6. 评论与工具 (百分比修复) ---
         function startCommentsListener() { onSnapshot(commentsCol, s => { comments = s.docs.map(d => ({id: d.id, ...d.data()})); if (currentArticleId) renderComments(); }); }
-        window.deleteComment = async (id) => { if(confirm("确定删除评论？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
+        window.deleteComment = async (id) => { if(confirm("删除评论？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
         function renderComments() {
             const listEl = document.getElementById('comments-list'); if (!listEl) return;
             const filtered = comments.filter(c => c.articleId === currentArticleId).sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis());
-            if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-400 text-center py-4 text-left italic">暂无评论。</p>'; return; }
+            if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-400 text-center py-4 italic">暂无评论。</p>'; return; }
             listEl.innerHTML = filtered.map(c => {
-                const canDelete = isAdminAuthenticated || (user && c.uid === user.uid);
                 const dateStr = c.timestamp?.toDate().toLocaleString('zh-CN', {year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'});
-                return `<div class="comment-card text-left text-balance"><div class="comment-header"><span class="font-bold text-indigo-600 text-sm">${c.name || '访客'}</span><div class="flex items-center gap-1.5 shrink-0"><span class="text-[10px] text-slate-400 font-bold">${dateStr}</span>${canDelete ? `<button type="button" onclick="window.deleteComment('${c.id}')" class="comment-delete-btn"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>` : ''}</div></div><p class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">${c.content}</p></div>`;
+                return `<div class="comment-card text-left text-balance"><div class="comment-header text-left"><span class="font-bold text-indigo-600 text-sm truncate mr-4 text-left">${c.name || '访客'}</span><div class="flex items-center gap-1.5 shrink-0 text-left"><span class="text-[10px] text-slate-400 font-bold text-right">${dateStr}</span>${isAdminAuthenticated || (user && c.uid === user.uid) ? `<button type="button" onclick="window.deleteComment('${c.id}')" class="comment-delete-btn"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>` : ''}</div></div><p class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap text-left">${c.content}</p></div>`;
             }).join('');
         }
         window.submitComment = async () => {
             const n = document.getElementById('comment-name').value.trim(), c = document.getElementById('comment-content').value.trim();
-            if (!c) return; const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
+            if (!c) return alert("内容为空"); const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
             try { await addDoc(commentsCol, { articleId: currentArticleId, name: n || '匿名访客', content: c, timestamp: Timestamp.now(), uid: user.uid }); document.getElementById('comment-content').value = ""; } finally { btn.disabled = false; }
         };
 
-        // --- 模拟器核心 ---
         const cvs = document.getElementById('compoundCanvas'), cx = cvs.getContext('2d'), tooltip = document.getElementById('chart-tooltip');
         function renderChart() {
-            if (!cvs) return;
-            const w = cvs.width = cvs.parentElement.clientWidth, h = 260; cvs.height = h;
+            if (!cvs) return; const w = cvs.width = cvs.parentElement.clientWidth, h = 260; cvs.height = h;
             const p = parseFloat(document.getElementById('inputPrincipal').value) || 0, m = parseFloat(document.getElementById('inputMonthly').value) || 0, yrs = parseInt(document.getElementById('yearsInput').value), r = parseInt(document.getElementById('rateInput').value) / 100;
-            let chartData = [{year: 0, principal: p, wealth: p, interest: 0}]; let cur = p;
-            for(let i = 1; i <= yrs; i++) { cur = cur * (1 + r) + (m * 12); let inv = p + (m * 12 * i); chartData.push({ year: i, principal: inv, wealth: cur, interest: Math.max(0, cur - inv) }); }
+            let chartData = [{year: 0, principal: p, wealth: p}]; let cur = p;
+            for(let i = 1; i <= yrs; i++) { cur = cur * (1 + r) + (m * 12); let inv = p + (m * 12 * i); chartData.push({ year: i, principal: inv, wealth: cur }); }
             const max = chartData[chartData.length-1].wealth || 1; document.getElementById('finalWealth').innerText = `¥${Math.round(max).toLocaleString()}`;
-            cx.clearRect(0, 0, w, h); cx.strokeStyle = '#f1f5f9'; cx.setLineDash([5, 5]); for(let i=1; i<5; i++) { cx.beginPath(); cx.moveTo(0, h-(i*h/5)); cx.lineTo(w, h-(i*h/5)); cx.stroke(); }
-            cx.setLineDash([]); cx.beginPath(); cx.moveTo(0, h); chartData.forEach(d => cx.lineTo((d.year/yrs)*w, h - (d.principal/max)*(h-60)-30)); cx.lineTo(w, h); cx.fillStyle = '#4f46e5'; cx.globalAlpha = 0.8; cx.fill();
-            cx.beginPath(); cx.moveTo(0, h); chartData.forEach(d => cx.lineTo((d.year/yrs)*w, h - (d.wealth/max)*(h-60)-30)); for(let i=chartData.length-1; i>=0; i--){ cx.lineTo((chartData[i].year/yrs)*w, h - (chartData[i].principal/max)*(h-60)-30); } cx.fillStyle = '#10b981'; cx.globalAlpha = 0.4; cx.fill(); cx.globalAlpha = 1.0;
-            cx.beginPath(); cx.strokeStyle = '#4f46e5'; cx.lineWidth = 3; chartData.forEach((d, i) => { const x = (d.year/yrs)*w, y = h - (d.wealth/max)*(h-60)-30; if(i===0) cx.moveTo(x,y); else cx.lineTo(x,y); }); cx.stroke();
-            window.lastChartData = chartData; // 全局缓存供 tooltip 使用
+            cx.clearRect(0,0,w,h); cx.strokeStyle = '#f1f5f9'; cx.setLineDash([5,5]); for(let i=1;i<5;i++){ cx.beginPath(); cx.moveTo(0,h-(i*h/5)); cx.lineTo(w,h-(i*h/5)); cx.stroke(); }
+            cx.setLineDash([]); cx.beginPath(); cx.moveTo(0,h); chartData.forEach(d=>cx.lineTo((d.year/yrs)*w,h-(d.principal/max)*(h-60)-30)); cx.lineTo(w,h); cx.fillStyle='#4f46e5'; cx.globalAlpha=0.8; cx.fill();
+            cx.beginPath(); cx.moveTo(0,h); chartData.forEach(d=>cx.lineTo((d.year/yrs)*w,h-(d.wealth/max)*(h-60)-30)); for(let i=chartData.length-1; i>=0; i--){ cx.lineTo((chartData[i].year/yrs)*w,h-(chartData[i].principal/max)*(h-60)-30); } cx.fillStyle='#10b981'; cx.globalAlpha=0.4; cx.fill();
+            cx.beginPath(); cx.strokeStyle='#4f46e5'; cx.lineWidth=3; chartData.forEach((d,i)=>{ const x=(d.year/yrs)*w, y=h-(d.wealth/max)*(h-60)-30; if(i===0) cx.moveTo(x,y); else cx.lineTo(x,y); }); cx.stroke();
+            window.lastData = chartData;
         }
-
         cvs.onmousemove = e => {
             const rect = cvs.getBoundingClientRect(), x = e.clientX - rect.left, yrs = parseInt(document.getElementById('yearsInput').value);
-            const yr = Math.round((x / cvs.width) * yrs); const d = (window.lastChartData || []).find(p => p.year === yr);
+            const yr = Math.round((x / cvs.width) * yrs); const d = (window.lastData || []).find(p => p.year === yr);
             if(d) {
-                const max = window.lastChartData[window.lastChartData.length-1].wealth;
-                const px = (d.year/yrs)*cvs.width, py = cvs.height - (d.wealth/max)*(cvs.height-60)-30;
+                const max = window.lastData[window.lastData.length-1].wealth; const px = (d.year/yrs)*cvs.width, py = cvs.height - (d.wealth/max)*(cvs.height-60)-30;
                 tooltip.classList.remove('hidden'); tooltip.style.left = (px > cvs.width - 150 ? px - 160 : px + 15) + 'px'; tooltip.style.top = (py - 70) + 'px';
-                tooltip.innerHTML = `<div class="font-bold border-b border-white/20 pb-1 mb-1 text-indigo-200">第 ${d.year} 年</div><div class="text-[9px]">本金: ¥${Math.round(d.principal).toLocaleString()}</div><div class="text-emerald-300 text-[9px]">收益: ¥${Math.round(d.interest).toLocaleString()}</div><div class="font-bold border-t border-white/10 mt-1">总计: ¥${Math.round(d.wealth).toLocaleString()}</div>`;
+                tooltip.innerHTML = `<div class="font-bold text-indigo-200">第 ${d.year} 年</div><div>本金: ¥${Math.round(d.principal).toLocaleString()}</div><div class="text-emerald-300">总计: ¥${Math.round(d.wealth).toLocaleString()}</div>`;
             }
         };
         cvs.onmouseleave = () => tooltip.classList.add('hidden');
-
-        // --- 初始化 ---
-        window.addEventListener('load', () => {
-            const f = document.getElementById('login-form'); if(f) f.addEventListener('submit', window.submitAuth);
-            document.getElementById('image-upload').addEventListener('change', (e) => handleFileUpload(e, 'image'));
-            document.getElementById('file-upload').addEventListener('change', (e) => handleFileUpload(e, 'file'));
-            ['yearsInput', 'rateInput', 'inputPrincipal', 'inputMonthly'].forEach(id => { document.getElementById(id)?.addEventListener('input', (e) => { const valEl = document.getElementById(id.replace('Input','Val')); if(valEl) valEl.innerText = e.target.value; renderChart(); }); });
-            if (location.hash) updateUIFromHash(); renderChart();
-        });
-
+        ['yearsInput','rateInput','inputPrincipal','inputMonthly'].forEach(id => document.getElementById(id)?.addEventListener('input', (e) => { const vEl = document.getElementById(id.replace('Input','Val')); if(vEl) vEl.innerText = e.target.value; renderChart(); }));
+        window.handleLogoClick = () => { logoClickCount++; if (logoClickCount >= 5) { window.checkAdminAuth(); logoClickCount = 0; } };
+        window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; document.getElementById('nav-admin-link').classList.add('hidden'); window.showView('home'); };
+        
         onAuthStateChanged(auth, async (u) => { 
             user = u; 
             if (user) { 
-                startDataListener(); 
-                startSettingsListener(); 
-                startCommentsListener(); 
-                await syncSecurityRecord(); 
+                startDataListener(); startSettingsListener(); startCommentsListener(); await syncSecurityRecord(); 
                 if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { 
                     isAdminAuthenticated = true; 
                     document.getElementById('nav-admin-link')?.classList.remove('hidden'); 
@@ -501,15 +430,29 @@
 
         (async () => { try { await signInAnonymously(auth); } catch (e) { document.getElementById('fatal-error-overlay').style.display = 'flex'; } })();
 
-        setInterval(() => {
-            const tgt = new Date('2026-12-20'), start = new Date('2026-01-01'), now = new Date();
-            const days = Math.ceil((tgt-now)/86400000); const pct = Math.min(100, Math.max(0, ((now-start)/(tgt-start))*100));
-            const cEl = document.getElementById('countdown'); if(cEl) cEl.innerText = days + ' 天';
-            const bEl = document.getElementById('progress-bar'); if(bEl) bEl.style.width = pct + '%';
-            const tEl = document.getElementById('progress-text'); if(tEl) tEl.innerText = `已完成 2026 奋斗进度的 ${pct.toFixed(1)}%`;
-        }, 1000);
+        window.addEventListener('load', () => { 
+            const form = document.getElementById('login-form');
+            if (form) {
+                form.addEventListener('submit', window.submitAuth);
+                document.getElementById('admin-password-input').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); window.submitAuth(); }
+                });
+            }
+            document.getElementById('image-upload').addEventListener('change', (e)=>handleFileUpload(e,'image'));
+            document.getElementById('file-upload').addEventListener('change', (e)=>handleFileUpload(e,'file'));
+            if (location.hash) updateUIFromHash(); renderChart(); 
+        });
 
-        window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; document.getElementById('nav-admin-link').classList.add('hidden'); window.showView('home'); };
+        setInterval(() => { 
+            const tgt = new Date('2026-12-20'), start = new Date('2026-01-01'), now = new Date(); 
+            const days = Math.ceil((tgt-now)/86400000); 
+            const pct = Math.min(100, Math.max(0, ((now-start)/(tgt-start))*100)); 
+            const cEl = document.getElementById('countdown'); if(cEl) cEl.innerText = days + ' 天'; 
+            const bEl = document.getElementById('progress-bar'); if(bEl) bEl.style.width = pct + '%'; 
+            // 找回百分比文字
+            const tEl = document.getElementById('progress-text');
+            if(tEl) tEl.innerText = `已完成 2026 奋斗进度的 ${pct.toFixed(1)}%`;
+        }, 1000);
     </script>
 </body>
 </html>
