@@ -69,11 +69,13 @@
     <!-- 导航栏 -->
     <nav class="sticky top-0 z-50 glass-card py-4 px-6 mb-8 shadow-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-left">
-            <h1 onclick="window.handleLogoClick()" id="nav-site-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent cursor-pointer select-none">STRIVE 2026</h1>
+            <!-- 移除 Logo 的点击隐藏逻辑 -->
+            <h1 id="nav-site-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent cursor-default select-none">STRIVE 2026</h1>
             <div class="space-x-6 text-sm font-medium flex items-center text-slate-600 font-bold">
                 <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition">首页</a>
-                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hidden hover:text-indigo-600 transition flex items-center gap-1">管理中心</a>
-                <a id="nav-contact-btn" href="#" target="_blank" class="px-5 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">联系我</a>
+                <!-- “管理中心”按钮常驻显示 -->
+                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hover:text-indigo-600 transition flex items-center gap-1">管理中心</a>
+                <a id="nav-contact-btn" href="#" target="_blank" class="px-5 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 font-bold">联系我</a>
             </div>
         </div>
     </nav>
@@ -130,11 +132,23 @@
                 <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
                     <h3 class="font-bold text-sm uppercase tracking-tighter text-indigo-600">全局文字配置</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="set-site-title" placeholder="Logo 名字" class="p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
-                        <input type="text" id="set-contact-link" placeholder="联系链接" class="p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 ml-2">站点名字</label>
+                            <input type="text" id="set-site-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 ml-2">联系链接</label>
+                            <input type="text" id="set-contact-link" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                        </div>
                     </div>
-                    <input type="text" id="set-welcome-title" placeholder="大标题" class="w-full p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
-                    <textarea id="set-welcome-desc" rows="2" placeholder="主页详细介绍" class="w-full p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 ml-2">大标题</label>
+                        <input type="text" id="set-welcome-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 ml-2">主页描述</label>
+                        <textarea id="set-welcome-desc" rows="2" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
+                    </div>
                     <div class="grid grid-cols-2 gap-4">
                         <input type="text" id="set-tag1" placeholder="标签1" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
                         <input type="text" id="set-tag2" placeholder="标签2" class="p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100">
@@ -175,8 +189,7 @@
                 <div class="w-full bg-indigo-500 rounded-full h-2.5 mb-4 shadow-inner">
                     <div id="progress-bar" class="bg-white h-2.5 rounded-full transition-all duration-1000 shadow-sm"></div>
                 </div>
-                <!-- 修复：百分比显示 -->
-                <p class="text-[10px] font-bold opacity-90 text-indigo-50 text-left" id="progress-text">已完成 2026 奋斗进度...</p>
+                <p class="text-[10px] font-bold opacity-90 text-indigo-50 text-left" id="progress-text">正在计算进度...</p>
             </div>
 
             <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-center">
@@ -216,7 +229,7 @@
         let isAdminAuthenticated = false, articles = [], comments = [], currentArticleId = null, user = null, securityRecord = null, chartData = [];
         window.tempMediaMap = {};
 
-        // --- 1. 核心修复：同步锁定记录 (定义在最前) ---
+        // --- 1. 同步锁定记录 ---
         async function syncSecurityRecord() { 
             if (!user) return; 
             try { 
@@ -235,7 +248,6 @@
                 isAdminAuthenticated = true; localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
                 await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
                 window.closeAuthModal(); window.showView('admin');
-                document.getElementById('nav-admin-link')?.classList.remove('hidden');
             } else {
                 let attempts = (securityRecord?.failedAttempts || 0) + 1;
                 let lockoutTime = attempts >= 5 ? now + LOCKOUT_MS : 0;
@@ -267,13 +279,23 @@
             }
         };
 
-        // --- 3. 路由与视图管理 ---
+        // --- 3. 路由管理 (加固权限守卫) ---
         window.showView = (v, id = null) => { location.hash = `#/${v}${id ? '/' + id : ''}`; };
         const updateUIFromHash = () => {
             const parts = location.hash.replace(/^#\//, '').split('/');
             const view = parts[0] || 'home', id = parts[1] || null;
+
+            // --- 核心防护：路由权限校验 ---
+            const isAuth = isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK;
+            if ((view === 'admin' || view === 'editor') && !isAuth) {
+                location.hash = '#/home'; // 强行重定向
+                window.checkAdminAuth(); // 弹出登录框
+                return;
+            }
+
             ['home', 'article', 'admin', 'editor'].forEach(x => document.getElementById(x + '-view')?.classList.add('hidden-view'));
             const target = document.getElementById(view + '-view'); if(target) target.classList.remove('hidden-view');
+            
             if (view === 'article' && id) {
                 currentArticleId = id; const a = articles.find(x => x.id === id);
                 if(a) { 
@@ -286,31 +308,22 @@
         };
         window.addEventListener('hashchange', updateUIFromHash);
 
-        // --- 4. 数据核心监听 (修复空文字) ---
+        // --- 4. 数据核心监听 ---
         function startSettingsListener() {
             onSnapshot(settingsDoc, s => {
                 const d = s.exists() ? s.data() : {};
-                // 更新主页标题
                 document.getElementById('nav-site-title').innerText = d.siteTitle || 'STRIVE 2026';
                 document.getElementById('welcome-title').innerText = d.welcomeTitle || '你好 👋';
                 document.getElementById('welcome-desc').innerText = d.welcomeDesc || '正在同步云端...';
-                
-                // 更新管理后台输入框内容
                 const mapping = {'set-site-title':'siteTitle','set-welcome-title':'welcomeTitle','set-welcome-desc':'welcomeDesc','set-contact-link':'contactLink','set-tag1':'tag1','set-tag2':'tag2'};
                 for (let [id, key] of Object.entries(mapping)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
-                
-                // 更新标签
-                const tagsEl = document.getElementById('welcome-tags'); 
-                if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${d.tag1 || '# 2026'}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${d.tag2 || '# 奋斗'}</span>`;
-                
-                // 更新联系按钮
-                const contactBtn = document.getElementById('nav-contact-btn'); 
-                if(contactBtn) { let url = (d.contactLink || '').trim(); if(url && !url.startsWith('http') && !url.startsWith('mailto:')) url = 'https://' + url; contactBtn.href = url || '#'; }
+                const tagsEl = document.getElementById('welcome-tags'); if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${d.tag1 || '# 2026'}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${d.tag2 || '# 奋斗'}</span>`;
+                const contactBtn = document.getElementById('nav-contact-btn'); if(contactBtn) { let url = (d.contactLink || '').trim(); if(url && !url.startsWith('http') && !url.startsWith('mailto:')) url = 'https://' + url; contactBtn.href = url || '#'; }
             });
         }
         window.saveSettings = async () => {
             const btn = document.getElementById('save-settings-btn'); btn.innerText = "同步中..."; btn.disabled = true;
-            try { await setDoc(settingsDoc, { siteTitle: document.getElementById('set-site-title').value, welcomeTitle: document.getElementById('set-welcome-title').value, welcomeDesc: document.getElementById('set-welcome-desc').value, contactLink: document.getElementById('set-contact-link').value, tag1: document.getElementById('set-tag1').value, tag2: document.getElementById('set-tag2').value }); btn.innerText = "保存同步"; setTimeout(()=>btn.disabled=false, 2000); } catch(e) { btn.disabled = false; }
+            try { await setDoc(settingsDoc, { siteTitle: document.getElementById('set-site-title').value, welcomeTitle: document.getElementById('set-welcome-title').value, welcomeDesc: document.getElementById('set-welcome-desc').value, contactLink: document.getElementById('set-contact-link').value, tag1: document.getElementById('set-tag1').value, tag2: document.getElementById('set-tag2').value }); btn.innerText = "保存成功"; setTimeout(()=>btn.disabled=false, 2000); } catch(e) { btn.disabled = false; }
         };
         function startDataListener() {
             onSnapshot(articlesCol, s => {
@@ -321,7 +334,7 @@
             });
         }
 
-        // --- 5. 占位符与编辑器 ---
+        // --- 5. 附件处理与编辑器 ---
         const handleFileUpload = (e, type) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -368,11 +381,11 @@
             let finalContent = document.getElementById('post-content').value;
             for (const [p, r] of Object.entries(window.tempMediaMap)) finalContent = finalContent.replace(p, r);
             const data = { title: document.getElementById('post-title').value, date: new Date().toLocaleDateString('zh-CN').replace(/\//g,'.'), summary: document.getElementById('post-summary').value, content: finalContent, updatedAt: Timestamp.now() };
-            try { if(document.getElementById('edit-id').value) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', document.getElementById('edit-id').value), data); else await addDoc(articlesCol, data); window.showView('admin'); } catch (err) { alert("同步失败！内容过大！"); } finally { btn.disabled = false; }
+            try { if(document.getElementById('edit-id').value) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', document.getElementById('edit-id').value), data); else await addDoc(articlesCol, data); window.showView('admin'); } catch (err) { alert("同步失败！"); } finally { btn.disabled = false; }
         };
         window.deletePost = id => { if(confirm("确定永久删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
-        // --- 6. 评论与工具 (百分比修复) ---
+        // --- 6. 评论系统 ---
         function startCommentsListener() { onSnapshot(commentsCol, s => { comments = s.docs.map(d => ({id: d.id, ...d.data()})); if (currentArticleId) renderComments(); }); }
         window.deleteComment = async (id) => { if(confirm("删除评论？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
         function renderComments() {
@@ -413,23 +426,8 @@
             }
         };
         cvs.onmouseleave = () => tooltip.classList.add('hidden');
-        ['yearsInput','rateInput','inputPrincipal','inputMonthly'].forEach(id => document.getElementById(id)?.addEventListener('input', (e) => { const vEl = document.getElementById(id.replace('Input','Val')); if(vEl) vEl.innerText = e.target.value; renderChart(); }));
-        window.handleLogoClick = () => { logoClickCount++; if (logoClickCount >= 5) { window.checkAdminAuth(); logoClickCount = 0; } };
-        window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; document.getElementById('nav-admin-link').classList.add('hidden'); window.showView('home'); };
-        
-        onAuthStateChanged(auth, async (u) => { 
-            user = u; 
-            if (user) { 
-                startDataListener(); startSettingsListener(); startCommentsListener(); await syncSecurityRecord(); 
-                if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { 
-                    isAdminAuthenticated = true; 
-                    document.getElementById('nav-admin-link')?.classList.remove('hidden'); 
-                } 
-            } 
-        });
 
-        (async () => { try { await signInAnonymously(auth); } catch (e) { document.getElementById('fatal-error-overlay').style.display = 'flex'; } })();
-
+        // --- 7. 初始化 ---
         window.addEventListener('load', () => { 
             const form = document.getElementById('login-form');
             if (form) {
@@ -440,8 +438,21 @@
             }
             document.getElementById('image-upload').addEventListener('change', (e)=>handleFileUpload(e,'image'));
             document.getElementById('file-upload').addEventListener('change', (e)=>handleFileUpload(e,'file'));
+            ['yearsInput','rateInput','inputPrincipal','inputMonthly'].forEach(id => document.getElementById(id)?.addEventListener('input', (e) => { const vEl = document.getElementById(id.replace('Input','Val')); if(vEl) vEl.innerText = e.target.value; renderChart(); }));
             if (location.hash) updateUIFromHash(); renderChart(); 
         });
+
+        onAuthStateChanged(auth, async (u) => { 
+            user = u; 
+            if (user) { 
+                startDataListener(); startSettingsListener(); startCommentsListener(); await syncSecurityRecord(); 
+                if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { 
+                    isAdminAuthenticated = true; 
+                } 
+            } 
+        });
+
+        (async () => { try { await signInAnonymously(auth); } catch (e) { document.getElementById('fatal-error-overlay').style.display = 'flex'; } })();
 
         setInterval(() => { 
             const tgt = new Date('2026-12-20'), start = new Date('2026-01-01'), now = new Date(); 
@@ -449,10 +460,19 @@
             const pct = Math.min(100, Math.max(0, ((now-start)/(tgt-start))*100)); 
             const cEl = document.getElementById('countdown'); if(cEl) cEl.innerText = days + ' 天'; 
             const bEl = document.getElementById('progress-bar'); if(bEl) bEl.style.width = pct + '%'; 
-            // 找回百分比文字
             const tEl = document.getElementById('progress-text');
             if(tEl) tEl.innerText = `已完成 2026 奋斗进度的 ${pct.toFixed(1)}%`;
         }, 1000);
+
+        window.handleLogoClick = () => {
+            // 移除原本的 logic，Logo 点击现在不触发任何操作
+        };
+
+        window.logoutAdmin = () => { 
+            localStorage.removeItem(PERSIST_KEY); 
+            isAdminAuthenticated = false; 
+            window.showView('home'); 
+        };
     </script>
 </body>
 </html>
