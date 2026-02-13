@@ -8,57 +8,120 @@
     <!-- 引入专业排版插件 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.10/dist/typography.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        .canvas-container { position: relative; width: 100%; height: 260px; cursor: crosshair; }
-        .hidden-view { display: none; opacity: 0; }
-        .view-content { transition: opacity 0.3s ease-in-out; }
-        #fatal-error-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-enter { animation: modalIn 0.3s ease-out; }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
-        /* 文章内容显示样式 */
-        .content-body img { max-width: 100%; height: auto; border-radius: 1rem; margin: 1.5rem 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: block; }
-        .content-body a { color: #4f46e5; text-decoration: underline; font-weight: 600; }
-        
-        /* 复利模拟器布局 */
-        .number-input {
-            @apply bg-slate-50 border border-slate-100 rounded-lg text-xs font-semibold text-indigo-600 outline-none focus:ring-1 focus:ring-indigo-400 transition;
-            padding: 4px 8px;
-            max-width: 85px; 
-            width: 100%;
+        :root {
+            --primary: #6366f1;
         }
 
-        /* 评论卡片：右上角排版 */
-        .comment-card {
-            @apply bg-white p-5 rounded-2xl border border-slate-100 mb-4 transition-all hover:border-indigo-100 hover:shadow-sm relative text-left;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc;
+            scroll-behavior: smooth; 
+            overflow-x: hidden;
+            min-height: 100vh;
         }
-        .comment-header { @apply flex justify-between items-start mb-2; }
-        .comment-delete-btn { @apply text-slate-300 hover:text-red-500 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center p-1; }
+
+        /* --- 核心美化：动态艺术流光背景 --- */
+        .mesh-background {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            /* 更有存在感的色彩搭配 */
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 55%),
+                radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(251, 191, 36, 0.1) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+            background-size: 200% 200%;
+            animation: artisticFlow 25s ease infinite alternate;
+        }
+
+        @keyframes artisticFlow {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 100%; }
+        }
+
+        /* --- 增强毛玻璃质感：边框和饱和度是关键 --- */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(20px) saturate(180%); 
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6); 
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 纯白磨砂效果，用于列表卡片 */
+        .article-card { 
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        .article-card:hover { 
+            transform: translateY(-8px) scale(1.01); 
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 30px 60px -15px rgba(99, 102, 241, 0.1); 
+        }
+
+        .canvas-container { position: relative; width: 100%; height: 260px; cursor: crosshair; }
+        .hidden-view { display: none; opacity: 0; transform: scale(0.98); }
+        .view-content { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        #fatal-error-overlay { 
+            position: fixed; inset: 0; z-index: 9999; 
+            background: rgba(15, 23, 42, 0.96); 
+            display: none; align-items: center; justify-content: center; padding: 20px; 
+        }
+        
+        .modal-enter { animation: modalIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(15px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        /* 文章详情：极简阅读美学 */
+        .content-body img { max-width: 100%; height: auto; border-radius: 1.5rem; margin: 2.5rem 0; box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2); display: block; border: 6px solid white; }
+        .content-body a { color: var(--primary); text-decoration: none; border-bottom: 2px solid rgba(99, 102, 241, 0.3); transition: all 0.2s; font-weight: 700; padding: 0 2px; }
+        .content-body a:hover { background: rgba(99, 102, 241, 0.1); border-bottom-color: var(--primary); }
+        
+        input[type=range] { accent-color: var(--primary); }
+        .number-input {
+            @apply bg-white/60 border border-slate-200 rounded-xl text-xs font-black text-indigo-600 outline-none focus:ring-4 focus:ring-indigo-400/20 transition-all;
+            padding: 8px 12px;
+            max-width: 95px; 
+        }
+
+        .comment-card { @apply bg-white/90 p-8 rounded-[2rem] border border-white mb-6 transition-all hover:border-indigo-100 relative shadow-sm; }
+        .comment-delete-btn { @apply text-slate-300 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-red-50; }
     </style>
 </head>
-<body class="text-slate-800 text-left">
+<body class="text-slate-900 text-left antialiased">
+
+    <!-- 动态背景层 -->
+    <div class="mesh-background"></div>
 
     <div id="fatal-error-overlay">
-        <div class="bg-white max-w-md w-full rounded-3xl p-8 shadow-2xl text-center modal-enter">
-            <h3 class="text-xl font-bold text-slate-900 mb-4">云端连接受阻</h3>
-            <p class="text-slate-600 text-sm mb-6 text-left">请在 Firebase 控制台开启“Anonymous”登录方式以同步数据。</p>
-            <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">刷新进入</button>
+        <div class="bg-white max-w-md w-full rounded-[3rem] p-12 shadow-2xl text-center modal-enter">
+            <div class="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8 text-4xl shadow-inner">⚠️</div>
+            <h3 class="text-3xl font-black text-slate-900 mb-4 tracking-tighter">数据库失联</h3>
+            <p class="text-slate-500 text-sm mb-10 leading-relaxed font-medium px-4">浏览博文需要建立云端安全通道。请检查科学上网环境是否已成功开启。</p>
+            <button onclick="location.reload()" class="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest text-sm">立即重试连接</button>
         </div>
     </div>
 
-    <!-- 管理员登录弹窗 -->
-    <div id="auth-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 text-left">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter">
-            <h3 class="text-xl font-bold mb-2 text-slate-900 text-center">身份确认</h3>
-            <p class="text-slate-500 text-xs mb-6 text-center" id="auth-hint">请输入管理员暗号进入后台</p>
+    <!-- 验证弹窗 -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+        <div class="bg-white/90 w-full max-w-sm rounded-[3rem] p-12 shadow-2xl modal-enter border border-white/40">
+            <h3 class="text-2xl font-black mb-1 text-slate-900 text-center tracking-tight">后台入口</h3>
+            <p class="text-slate-400 text-[10px] mb-10 text-center uppercase tracking-[0.4em] font-black opacity-60">Verification Required</p>
             <form id="login-form">
-                <div class="space-y-6 text-left">
-                    <input type="password" id="admin-password-input" class="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="暗号..." autocomplete="current-password">
-                    <div class="flex gap-3">
-                        <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition text-sm text-balance">确定 (Enter)</button>
-                        <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition text-sm text-balance">取消</button>
+                <div class="space-y-8 text-left">
+                    <input type="password" id="admin-password-input" class="w-full p-6 bg-white/80 rounded-2xl border-2 border-transparent outline-none focus:border-indigo-500 focus:bg-white transition-all text-center text-xl tracking-[0.5em] font-black shadow-inner" placeholder="••••••">
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-[2] bg-indigo-600 text-white py-5 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 text-xs uppercase tracking-widest">确认</button>
+                        <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-500 py-5 rounded-2xl font-bold hover:bg-slate-200 transition-all text-xs uppercase">取消</button>
                     </div>
                 </div>
             </form>
@@ -66,115 +129,122 @@
     </div>
 
     <!-- 导航栏 -->
-    <nav class="sticky top-0 z-50 glass-card py-4 px-6 mb-8 shadow-sm">
-        <div class="max-w-6xl mx-auto flex justify-between items-center text-left">
-            <!-- 修复：Logo 点击回首页，且鼠标变为手型 -->
-            <h1 onclick="window.showView('home')" id="nav-site-title" class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-sky-500 bg-clip-text text-transparent cursor-pointer select-none">STRIVE 2026</h1>
-            <div class="space-x-6 text-sm font-medium flex items-center text-slate-600 font-bold text-left">
-                <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition">首页</a>
-                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hover:text-indigo-600 transition flex items-center gap-1">管理中心</a>
-                <a id="nav-contact-btn" href="#" target="_blank" class="px-5 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 font-bold">联系我</a>
+    <nav class="sticky top-0 z-50 glass-card py-6 px-10 mb-10 border-b border-white/50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center text-left">
+            <div class="flex flex-col group cursor-pointer" onclick="window.showView('home')">
+                <h1 id="nav-site-title" class="text-2xl font-black bg-gradient-to-br from-indigo-800 to-sky-600 bg-clip-text text-transparent tracking-tighter select-none">STRIVE 2026</h1>
+                <p class="text-[9px] font-black text-slate-400 mt-0.5 tracking-widest uppercase group-hover:text-indigo-600 transition-colors">（浏览该博客需要科学上网）</p>
+            </div>
+            <div class="space-x-10 text-xs font-black uppercase tracking-widest flex items-center text-slate-500 text-left">
+                <a href="javascript:void(0)" onclick="window.showView('home')" class="hover:text-indigo-600 transition-all">Home</a>
+                <a id="nav-admin-link" href="javascript:void(0)" onclick="window.checkAdminAuth()" class="hover:text-indigo-600 transition-all flex items-center gap-1 underline decoration-4 decoration-indigo-500/10 underline-offset-8">Admin</a>
+                <a id="nav-contact-btn" href="#" target="_blank" class="px-8 py-3 bg-slate-900 text-white rounded-full hover:bg-indigo-600 transition-all shadow-2xl shadow-slate-300 text-[10px] font-black">Contact</a>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
-        <div class="lg:col-span-2 space-y-8 text-left">
+    <main class="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 pb-24 text-left">
+        <div class="lg:col-span-8 space-y-12 text-left">
             <!-- 首页视图 -->
-            <div id="home-view" class="view-content space-y-8">
-                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden text-left text-balance">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-[5rem] -z-10 opacity-50"></div>
-                    <h2 id="welcome-title" class="text-4xl font-extrabold mb-4 text-slate-900 tracking-tight text-balance">你好 👋</h2>
-                    <p id="welcome-desc" class="text-slate-500 text-lg leading-relaxed mb-8 italic">数据同步中...</p>
-                    <div id="welcome-tags" class="flex flex-wrap gap-3"></div>
+            <div id="home-view" class="view-content space-y-12 text-left">
+                <div class="bg-white/70 p-12 md:p-16 rounded-[4rem] border border-white shadow-sm relative overflow-hidden text-left">
+                    <div class="absolute -top-32 -right-32 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px]"></div>
+                    <div class="relative z-10 text-left">
+                        <h2 id="welcome-title" class="text-4xl font-black mb-6 text-slate-900 tracking-tighter leading-tight">你好 👋</h2>
+                        <p id="welcome-desc" class="text-slate-500 text-xl leading-relaxed mb-10 max-w-2xl font-medium">正在拉取您的个人数字足迹...</p>
+                        <div id="welcome-tags" class="flex flex-wrap gap-3"></div>
+                    </div>
                 </div>
-                <div class="space-y-6 text-left">
-                    <h3 class="text-xl font-bold flex items-center gap-2 text-slate-800">
-                        <span class="w-2 h-6 bg-indigo-600 rounded-full"></span>最新博文
+
+                <div class="space-y-10 px-2 text-left text-balance">
+                    <h3 class="text-xl font-black text-slate-800 flex items-center gap-4 uppercase tracking-[0.2em]">
+                        <span class="w-2.5 h-8 bg-indigo-600 rounded-full shadow-lg shadow-indigo-100"></span>Latest Logs
                     </h3>
-                    <div id="article-list" class="grid gap-6 text-balance text-left"></div>
+                    <div id="article-list" class="grid gap-8"></div>
                 </div>
             </div>
 
-            <!-- 文章详情视图 -->
-            <div id="article-view" class="view-content hidden-view space-y-8 text-left text-balance">
-                <button onclick="window.showView('home')" class="group flex items-center text-sm font-bold text-slate-400 hover:text-indigo-600 transition font-bold text-left">
-                    <span class="mr-2 group-hover:-translate-x-1 transition-transform">←</span> 返回列表
+            <!-- 文章详情内容 -->
+            <div id="article-view" class="view-content hidden-view space-y-12 text-left">
+                <button onclick="window.showView('home')" class="group flex items-center text-[10px] font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-[0.3em] px-6 text-left">
+                    <span class="mr-4 text-2xl group-hover:-translate-x-2 transition-transform">←</span> 返回列表
                 </button>
-                <div class="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-100 text-left">
-                    <div id="article-detail-content" class="prose prose-indigo prose-lg max-w-none content-body text-left"></div>
+                <div class="bg-white/90 p-12 md:p-20 rounded-[4rem] border border-white shadow-xl text-left">
+                    <div id="article-detail-content" class="prose prose-slate prose-lg max-w-none content-body text-left"></div>
                 </div>
-                <!-- 互动评论 -->
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-8 text-left text-balance">
-                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <span class="w-2 h-6 bg-emerald-500 rounded-full"></span>互动交流
+                <div class="bg-white/70 p-12 rounded-[4rem] border border-white shadow-xl space-y-12 text-left text-balance">
+                    <h3 class="text-2xl font-black text-slate-800 flex items-center gap-4">
+                        <span class="w-3 h-9 bg-emerald-500 rounded-full shadow-lg shadow-emerald-100"></span>互动交流
                     </h3>
-                    <div class="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left">
-                        <input type="text" id="comment-name" placeholder="您的昵称" class="p-3 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm font-medium w-full md:w-1/2">
-                        <textarea id="comment-content" rows="3" placeholder="写下你的想法..." class="w-full p-4 bg-white rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-100 transition text-sm"></textarea>
-                        <button onclick="window.submitComment()" id="comment-submit-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition text-sm text-balance">发表评论</button>
+                    <div class="space-y-8 bg-white/50 p-10 rounded-[3rem] border border-slate-100 text-left">
+                        <input type="text" id="comment-name" placeholder="您的称呼" class="w-full md:w-1/2 p-5 bg-white/80 rounded-2xl border-2 border-transparent outline-none focus:border-indigo-500/20 transition-all text-sm font-black shadow-sm">
+                        <textarea id="comment-content" rows="3" placeholder="写下你的想法..." class="w-full p-6 bg-white/80 rounded-[2rem] border-2 border-transparent outline-none focus:border-indigo-500/20 transition-all text-sm leading-relaxed font-medium shadow-sm"></textarea>
+                        <button onclick="window.submitComment()" id="comment-submit-btn" class="px-12 py-5 bg-indigo-600 text-white font-black rounded-2xl shadow-xl hover:bg-indigo-700 hover:-translate-y-1 transition-all text-[10px] uppercase tracking-widest">发表评论</button>
                     </div>
-                    <div id="comments-list" class="space-y-6 text-left"></div>
+                    <div id="comments-list" class="space-y-8 text-left"></div>
                 </div>
             </div>
 
             <!-- 管理中心视图 -->
             <div id="admin-view" class="view-content hidden-view space-y-8 text-left">
-                <div class="flex justify-between items-center bg-white p-6 rounded-3xl border border-slate-100 shadow-sm text-balance text-left">
-                    <h2 class="text-2xl font-bold text-slate-800">管理后台</h2>
-                    <div class="flex gap-2 text-left text-balance">
-                        <button onclick="window.logoutAdmin()" class="px-4 py-2 bg-slate-50 text-slate-400 rounded-xl text-sm font-bold">注销</button>
-                        <button onclick="window.openEditor()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg">+ 发布内容</button>
+                <div class="flex justify-between items-center bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tighter">管理后台</h2>
+                    <div class="flex gap-4">
+                        <button onclick="window.logoutAdmin()" class="px-8 py-3 bg-slate-50 text-slate-400 rounded-2xl text-[10px] font-black hover:bg-red-50 hover:text-red-400 transition-all uppercase">注销</button>
+                        <button onclick="window.openEditor()" class="px-10 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black shadow-xl hover:bg-indigo-700 transition-all uppercase">+ 新建</button>
                     </div>
                 </div>
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6 text-balance text-left">
-                    <h3 class="font-bold text-sm uppercase tracking-tighter text-indigo-600">全局文字配置</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                        <div class="space-y-1 text-left">
-                            <label class="text-[10px] font-bold text-slate-400 ml-2">站点 Logo 名字</label>
-                            <input type="text" id="set-site-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                <div class="bg-white/80 p-12 rounded-[3.5rem] border border-slate-100 space-y-12 text-left">
+                    <h3 class="font-black text-[10px] uppercase tracking-[0.4em] text-indigo-600 opacity-60">System Config</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">站点标题</label>
+                            <input type="text" id="set-site-title" class="w-full p-5 bg-white rounded-2xl border-none focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all font-bold shadow-sm">
                         </div>
-                        <div class="space-y-1 text-left">
-                            <label class="text-[10px] font-bold text-slate-400 ml-2">联系链接</label>
-                            <input type="text" id="set-contact-link" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100 w-full">
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">联系链接</label>
+                            <input type="text" id="set-contact-link" class="w-full p-5 bg-white rounded-2xl border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-bold shadow-sm">
                         </div>
                     </div>
-                    <div class="space-y-1 text-left">
-                        <label class="text-[10px] font-bold text-slate-400 ml-2">大标题</label>
-                        <input type="text" id="set-welcome-title" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100">
+                    <div class="space-y-3">
+                        <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">大标题</label>
+                        <input type="text" id="set-welcome-title" class="w-full p-5 bg-white rounded-2xl border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-black text-lg shadow-sm">
                     </div>
-                    <div class="space-y-1 text-left">
-                        <label class="text-[10px] font-bold text-slate-400 ml-2">主页详细描述</label>
-                        <textarea id="set-welcome-desc" rows="2" class="w-full p-3 bg-slate-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-indigo-100"></textarea>
+                    <div class="space-y-3">
+                        <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">个人简介</label>
+                        <textarea id="set-welcome-desc" rows="2" class="w-full p-5 bg-white rounded-2xl border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-medium leading-relaxed shadow-sm"></textarea>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 text-left">
-                        <input type="text" id="set-tag1" placeholder="标签1" class="p-3 bg-slate-50 rounded-xl focus:ring-2 focus:ring-indigo-100">
-                        <input type="text" id="set-tag2" placeholder="标签2" class="p-3 bg-slate-50 rounded-xl focus:ring-2 focus:ring-indigo-100">
+                    <div class="grid grid-cols-2 gap-8">
+                        <input type="text" id="set-tag1" placeholder="TAG 1" class="p-5 bg-white rounded-2xl border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-black text-xs shadow-sm">
+                        <input type="text" id="set-tag2" placeholder="TAG 2" class="p-5 bg-white rounded-2xl border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-black text-xs shadow-sm">
                     </div>
-                    <button onclick="window.saveSettings()" id="save-settings-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl hover:bg-indigo-700 transition">保存修改并同步</button>
+                    <button onclick="window.saveSettings()" id="save-settings-btn" class="w-full py-6 bg-slate-900 text-white font-black rounded-[2rem] shadow-2xl hover:bg-indigo-600 transition-all uppercase tracking-[0.3em] text-xs">保存修改到云端</button>
                 </div>
-                <div id="admin-table-body" class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-balance text-left"></div>
+                <div id="admin-table-body" class="bg-white/80 rounded-[3.5rem] shadow-xl border border-white overflow-hidden text-left"></div>
             </div>
 
-            <!-- 编辑器视图 -->
-            <div id="editor-view" class="view-content hidden-view space-y-6 text-left">
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-center mb-8">
-                        <h3 id="editor-title" class="text-2xl font-bold text-slate-800">创作中心</h3>
-                        <div class="flex gap-2">
-                            <label class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full cursor-pointer hover:bg-indigo-100 transition">🖼️ 插图<input type="file" id="image-upload" accept="image/*" class="hidden"></label>
-                            <label class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full cursor-pointer hover:bg-emerald-100 transition">📎 附件<input type="file" id="file-upload" class="hidden"></label>
+            <!-- 编辑器 -->
+            <div id="editor-view" class="view-content hidden-view space-y-8 text-left">
+                <div class="bg-white p-16 rounded-[4rem] border border-white shadow-2xl text-left">
+                    <div class="flex justify-between items-center mb-12">
+                        <h3 id="editor-title" class="text-3xl font-black text-slate-900 tracking-tighter">博文创作</h3>
+                        <div class="flex gap-4">
+                            <label class="px-6 py-3 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-full cursor-pointer hover:bg-indigo-100 transition-all uppercase tracking-widest">贴图<input type="file" id="image-upload" accept="image/*" class="hidden"></label>
+                            <label class="px-6 py-3 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full cursor-pointer hover:bg-emerald-100 transition-all uppercase tracking-widest">附件<input type="file" id="file-upload" class="hidden"></label>
                         </div>
                     </div>
-                    <div class="space-y-4 text-left text-balance">
+                    <div class="space-y-6 text-left">
                         <input type="hidden" id="edit-id">
-                        <input type="text" id="post-title" placeholder="博文标题" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none text-xl font-bold" required>
-                        <textarea id="post-summary" placeholder="首页摘要" rows="2" class="w-full p-4 bg-slate-50 rounded-2xl font-bold" required></textarea>
-                        <div class="text-[10px] text-slate-400 ml-2 mb-1 font-bold text-left tracking-tight">提示：支持 Ctrl+V 粘贴图片，插入图片会变成 [[图片1]] 占位符。</div>
-                        <textarea id="post-content" placeholder="正文内容..." rows="18" class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-indigo-100 outline-none font-mono text-sm leading-relaxed" required></textarea>
-                        <div class="flex gap-4 pt-4 text-left text-balance">
-                            <button type="button" onclick="window.submitPost()" id="post-submit-btn" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-xl">发布同步</button>
-                            <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold text-balance">返回</button>
+                        <input type="text" id="post-title" placeholder="文章标题..." class="w-full p-8 bg-slate-50 rounded-[2rem] border-none focus:ring-4 focus:ring-indigo-500/10 outline-none text-2xl font-black">
+                        <textarea id="post-summary" placeholder="摘要：一句话概括你的笔记..." rows="2" class="w-full p-8 bg-slate-50 rounded-[2rem] border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-bold text-slate-500"></textarea>
+                        <div class="bg-indigo-50/50 p-6 rounded-3xl flex items-center gap-4 text-indigo-600/70 text-[11px] font-black leading-relaxed">
+                            <span class="text-xl">⚡</span>
+                            <p>支持 Ctrl+V 直接粘贴截图，系统会自动生成占位符。</p>
+                        </div>
+                        <textarea id="post-content" placeholder="开始记录你的奋斗..." rows="18" class="w-full p-10 bg-slate-50 rounded-[3rem] border-none focus:ring-4 focus:ring-indigo-500/10 outline-none font-mono text-base leading-relaxed text-slate-700"></textarea>
+                        <div class="flex gap-8 pt-8">
+                            <button type="button" onclick="window.submitPost()" id="post-submit-btn" class="flex-[2] bg-indigo-600 text-white py-6 rounded-[2rem] font-black shadow-2xl hover:bg-indigo-700 hover:-translate-y-1 transition-all uppercase tracking-widest text-xs">发布同步</button>
+                            <button type="button" onclick="window.showView('admin')" class="flex-1 bg-slate-100 text-slate-500 py-6 rounded-[2rem] font-black hover:bg-slate-200 transition-all uppercase text-xs">返回</button>
                         </div>
                     </div>
                 </div>
@@ -182,30 +252,60 @@
         </div>
 
         <!-- 侧边栏 -->
-        <div class="space-y-8 text-left text-balance">
-            <div class="bg-indigo-600 text-white p-8 rounded-[2rem] shadow-lg relative overflow-hidden shadow-indigo-200 text-left">
-                <h3 class="font-bold mb-4 text-xs uppercase opacity-70 tracking-widest text-left">考研 2026 倒计时</h3>
-                <div class="text-6xl font-bold mb-6 tabular-nums text-left" id="countdown">...</div>
-                <div class="w-full bg-indigo-500 rounded-full h-2.5 mb-4 shadow-inner text-left">
-                    <div id="progress-bar" class="bg-white h-2.5 rounded-full transition-all duration-1000 shadow-sm text-left"></div>
+        <div class="lg:col-span-4 space-y-12 text-left">
+            <!-- 考研倒计时 -->
+            <div class="bg-slate-900 text-white p-12 rounded-[4rem] shadow-2xl relative overflow-hidden group text-left">
+                <div class="absolute -top-16 -right-16 w-56 h-56 bg-indigo-500/20 rounded-full blur-[90px]"></div>
+                <h3 class="font-black mb-8 text-[11px] uppercase opacity-40 tracking-[0.4em] text-left">Timeline 2026</h3>
+                <!-- 字号优化：从 8xl 降到 6xl，更精致 -->
+                <div class="text-6xl font-black mb-10 tabular-nums tracking-tighter text-left" id="countdown">...</div>
+                <div class="w-full bg-slate-800 rounded-full h-4 mb-8 p-1 border border-white/5">
+                    <div id="progress-bar" class="bg-indigo-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_25px_rgba(99,102,241,0.5)]"></div>
                 </div>
-                <p class="text-[10px] font-bold opacity-90 text-indigo-50 text-left" id="progress-text">正在计算进度...</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] text-left" id="progress-text">Syncing...</p>
             </div>
 
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden text-center text-left">
-                <h3 class="font-bold text-slate-900 mb-6 flex justify-between items-center text-sm uppercase tracking-tighter text-left">复利模拟器 <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-bold">V2.2</span></h3>
-                <div class="canvas-container mb-6 group text-left text-balance"><canvas id="compoundCanvas"></canvas><div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/95 text-white text-[11px] p-3 rounded-xl shadow-2xl z-20 border border-white/10 whitespace-nowrap min-w-[140px] text-left"></div></div>
-                <div class="space-y-5 text-left text-balance">
-                    <div class="grid grid-cols-2 gap-x-2">
-                        <div class="flex flex-col items-start text-left"><label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">本金</label><input type="number" id="inputPrincipal" value="10000" class="number-input"></div>
-                        <div class="flex flex-col items-start text-left"><label class="text-[9px] font-bold text-slate-400 mb-1 uppercase ml-1">定投</label><input type="number" id="inputMonthly" value="2000" class="number-input"></div>
-                    </div>
-                    <div class="space-y-2 text-left"><div class="flex justify-between text-[11px] font-bold text-left"><span>年限</span><span class="text-indigo-600 font-mono text-left"><span id="yearsVal">20</span> 年</span></div><input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer"></div>
-                    <div class="space-y-2 text-left"><div class="flex justify-between text-[11px] font-bold text-left text-balance"><span>预期收益</span><span class="text-indigo-600 font-mono text-left"><span id="rateVal">8</span>%</span></div><input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-1 bg-slate-100 rounded-lg appearance-none cursor-pointer"></div>
+            <!-- 复利模拟器 -->
+            <div class="bg-white/70 p-12 rounded-[4rem] border border-white shadow-xl overflow-hidden relative text-left">
+                <div class="flex justify-between items-center mb-10 text-left">
+                    <h3 class="font-black text-slate-900 text-[10px] uppercase tracking-[0.4em]">Simulator</h3>
+                    <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase">v2.2-STB</span>
                 </div>
-                <div class="mt-8 pt-6 border-t border-slate-50 text-center text-left">
-                    <div class="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-widest text-left">预期最终资产</div>
-                    <div class="text-3xl font-bold text-indigo-600 tracking-tight font-mono text-left" id="finalWealth">...</div>
+                <div class="canvas-container mb-12">
+                    <canvas id="compoundCanvas"></canvas>
+                    <!-- 精修悬浮窗 -->
+                    <div id="chart-tooltip" class="absolute hidden pointer-events-none bg-slate-900/90 text-white text-[10px] p-6 rounded-[2rem] shadow-2xl z-20 border border-white/10 backdrop-blur-xl min-w-[190px]"></div>
+                </div>
+                <div class="space-y-10 text-left">
+                    <div class="grid grid-cols-2 gap-6 text-left">
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">本金 (¥)</label>
+                            <input type="number" id="inputPrincipal" value="10000" class="number-input w-full text-left font-black">
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">定投 (¥)</label>
+                            <input type="number" id="inputMonthly" value="2000" class="number-input w-full text-left font-black">
+                        </div>
+                    </div>
+                    <div class="space-y-5 text-left">
+                        <div class="flex justify-between text-[10px] font-black tracking-widest uppercase">
+                            <span class="text-slate-400">时间 (Years)</span>
+                            <span class="text-indigo-600 font-mono"><span id="yearsVal">20</span>Y</span>
+                        </div>
+                        <input type="range" id="yearsInput" min="1" max="40" value="20" class="w-full h-2 bg-slate-100 rounded-lg cursor-pointer">
+                    </div>
+                    <div class="space-y-5 text-left">
+                        <div class="flex justify-between text-[10px] font-black tracking-widest uppercase">
+                            <span class="text-slate-400">收益 (Rate %)</span>
+                            <span class="text-indigo-600 font-mono"><span id="rateVal">8</span>%</span>
+                        </div>
+                        <input type="range" id="rateInput" min="1" max="15" value="8" class="w-full h-2 bg-slate-100 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+                <div class="mt-16 pt-10 border-t border-slate-100 text-center">
+                    <div class="text-[10px] text-slate-400 mb-3 font-black uppercase tracking-[0.4em]">Future Worth</div>
+                    <!-- 字号优化：从 5xl 降到 3xl -->
+                    <div class="text-3xl font-black text-slate-900 tracking-tighter font-mono" id="finalWealth">...</div>
                 </div>
             </div>
         </div>
@@ -217,7 +317,7 @@
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const ADMIN_MASK = "WFlGeHlmMTIzNDU2QA=="; 
-        const PERSIST_KEY = "luxiaoyu_blog_persistence_final_v11_stable"; 
+        const PERSIST_KEY = "luxiaoyu_blog_persistence_final_v11_stable_beauty_v2"; 
         const LOCKOUT_MS = 5 * 60 * 1000;
         const fbConfig = { apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU", authDomain: "blog-6dd2d.firebaseapp.com", projectId: "blog-6dd2d", storageBucket: "blog-6dd2d.firebasestorage.app", messagingSenderId: "232992420063", appId: "1:232992420063:web:4afa71559dbf14ed47f96a", measurementId: "G-JV2BY25CFH" };
         const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const appId = 'blog-6dd2d';
@@ -231,12 +331,12 @@
 
         async function syncSecurityRecord() { if (!user) return; try { const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'security', user.uid)); securityRecord = snap.exists() ? snap.data() : { failedAttempts: 0, lockoutUntil: 0 }; } catch(e) {} }
 
-        // --- 1. 登录验证 ---
+        // --- 1. 认证 ---
         window.submitAuth = async (e) => {
             if (e && e.preventDefault) e.preventDefault();
             const input = document.getElementById('admin-password-input').value, now = Date.now();
             await syncSecurityRecord();
-            if (securityRecord?.lockoutUntil > now) return alert(`系统锁定中...`);
+            if (securityRecord?.lockoutUntil > now) return alert(`锁定中...`);
             if (btoa(input) === ADMIN_MASK) { 
                 isAdminAuthenticated = true; localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
                 await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
@@ -245,23 +345,18 @@
                 let attempts = (securityRecord?.failedAttempts || 0) + 1;
                 let lockoutTime = attempts >= 5 ? now + LOCKOUT_MS : 0;
                 await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
-                alert(lockoutTime > 0 ? "输错5次！已锁定。" : `暗号错误。还剩 ${5 - attempts} 次。`); await syncSecurityRecord();
+                alert(lockoutTime > 0 ? "保护锁定 5 分钟。" : `验证失败。剩 ${5 - attempts} 次机会。`); await syncSecurityRecord();
             }
         };
 
         window.checkAdminAuth = () => { 
-            if (isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { 
-                isAdminAuthenticated = true; window.showView('admin'); 
-            } else { 
-                const modal = document.getElementById('auth-modal');
-                if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); setTimeout(()=>document.getElementById('admin-password-input')?.focus(), 150); }
-            } 
+            if (isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { isAdminAuthenticated = true; window.showView('admin'); } 
+            else { const m = document.getElementById('auth-modal'); m.classList.remove('hidden'); m.classList.add('flex'); setTimeout(()=>document.getElementById('admin-password-input')?.focus(), 200); } 
         };
         window.closeAuthModal = () => { const m = document.getElementById('auth-modal'); m?.classList.add('hidden'); m?.classList.remove('flex'); document.getElementById('admin-password-input').value = ""; };
-
         window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; window.showView('home'); };
 
-        // --- 2. 路由管理 ---
+        // --- 2. 路由守卫 ---
         window.showView = (v, id = null) => { location.hash = `#/${v}${id ? '/' + id : ''}`; };
         const updateUIFromHash = () => {
             const parts = location.hash.replace(/^#\//, '').split('/');
@@ -273,8 +368,7 @@
             if (view === 'article' && id) {
                 currentArticleId = id; const a = articles.find(x => x.id === id);
                 if(a) { 
-                    const el = document.getElementById('article-detail-content');
-                    if(el) el.innerHTML = `<h1 class="text-4xl font-extrabold mb-4 leading-tight">${a.title}</h1><div class="text-slate-400 text-sm mb-12 font-bold uppercase tracking-widest text-left">📅 发布于 ${a.date}</div><div class="content-body text-left text-balance">${a.content}</div>`;
+                    document.getElementById('article-detail-content').innerHTML = `<h1 class="text-3xl font-black mb-8 leading-tight tracking-tighter text-slate-900">${a.title}</h1><div class="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-16"><span>PUBLISHED LOG</span><span class="text-indigo-500">${a.date}</span></div><div class="content-body text-left text-balance">${a.content}</div>`;
                     renderComments();
                 }
             } else currentArticleId = null;
@@ -282,7 +376,7 @@
         };
         window.addEventListener('hashchange', updateUIFromHash);
 
-        // --- 3. 排序与设置监听 ---
+        // --- 3. 数据监听 ---
         function startSettingsListener() {
             onSnapshot(settingsDoc, s => {
                 const d = s.exists() ? s.data() : {};
@@ -291,13 +385,13 @@
                 document.getElementById('welcome-desc').innerText = d.welcomeDesc || '同步云端中...';
                 const mapping = {'set-site-title':'siteTitle','set-welcome-title':'welcomeTitle','set-welcome-desc':'welcomeDesc','set-contact-link':'contactLink','set-tag1':'tag1','set-tag2':'tag2'};
                 for (let [id, key] of Object.entries(mapping)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
-                const tagsEl = document.getElementById('welcome-tags'); if(tagsEl) tagsEl.innerHTML = `<span class="px-4 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-xl border border-indigo-100">${d.tag1 || '# 2026'}</span><span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-xl border border-emerald-100">${d.tag2 || '# 奋斗'}</span>`;
+                const tagsEl = document.getElementById('welcome-tags'); if(tagsEl) tagsEl.innerHTML = `<span class="px-6 py-2.5 bg-white text-indigo-600 text-[10px] font-black rounded-2xl shadow-sm border border-slate-100 uppercase tracking-widest">${d.tag1 || '# 2026'}</span><span class="px-6 py-2.5 bg-white text-emerald-600 text-[10px] font-black rounded-2xl shadow-sm border border-slate-100 uppercase tracking-widest">${d.tag2 || '# 奋斗'}</span>`;
                 const contactBtn = document.getElementById('nav-contact-btn'); if(contactBtn) { let url = (d.contactLink || '').trim(); if(url && !url.startsWith('http')) url = 'https://' + url; contactBtn.href = url || '#'; }
             });
         }
         window.saveSettings = async () => {
-            const btn = document.getElementById('save-settings-btn'); btn.innerText = "同步中..."; btn.disabled = true;
-            try { await setDoc(settingsDoc, { siteTitle: document.getElementById('set-site-title').value, welcomeTitle: document.getElementById('set-welcome-title').value, welcomeDesc: document.getElementById('set-welcome-desc').value, contactLink: document.getElementById('set-contact-link').value, tag1: document.getElementById('set-tag1').value, tag2: document.getElementById('set-tag2').value }); btn.innerText = "保存成功"; setTimeout(()=> { btn.disabled=false; btn.innerText = "保存修改并同步"; }, 2000); } catch(e) { btn.disabled = false; }
+            const btn = document.getElementById('save-settings-btn'); btn.innerText = "SYNCING..."; btn.disabled = true;
+            try { await setDoc(settingsDoc, { siteTitle: document.getElementById('set-site-title').value, welcomeTitle: document.getElementById('set-welcome-title').value, welcomeDesc: document.getElementById('set-welcome-desc').value, contactLink: document.getElementById('set-contact-link').value, tag1: document.getElementById('set-tag1').value, tag2: document.getElementById('set-tag2').value }); btn.innerText = "SUCCESS"; setTimeout(()=> { btn.disabled=false; btn.innerText = "保存修改并同步"; }, 2000); } catch(e) { btn.disabled = false; }
         };
         function startDataListener() {
             onSnapshot(articlesCol, s => {
@@ -311,18 +405,17 @@
                 document.getElementById('article-list').innerHTML = articles.map(a => {
                     const imgMatch = a.content.match(/<img[^>]+src="([^">]+)"/);
                     const firstImg = imgMatch ? imgMatch[1] : null;
-                    return `<div onclick="window.showView('article', '${a.id}')" class="group bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer text-left relative overflow-hidden"><div class="flex justify-between gap-6"><div class="flex-1 min-w-0 text-left">${a.isPinned ? '<span class="inline-block mb-2 bg-indigo-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-sm">📌 置顶</span>' : ''}<h4 class="text-2xl font-bold mb-3 group-hover:text-indigo-600 transition-colors text-balance text-left">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed mb-4 text-balance text-left">${a.summary}</p><div class="flex items-center gap-4 text-left"><span class="text-slate-400 text-[10px] font-bold whitespace-nowrap">📅 ${a.date.split(' ')[0]}</span><div class="text-indigo-600 text-xs font-bold uppercase tracking-widest flex items-center whitespace-nowrap">READ FULL STORY →</div></div></div>${firstImg ? `<div class="w-24 h-24 md:w-32 md:h-32 shrink-0 rounded-2xl overflow-hidden shadow-sm border border-slate-50 self-center"><img src="${firstImg}" class="w-full h-full object-cover"></div>` : ''}</div></div>`;
+                    return `<div onclick="window.showView('article', '${a.id}')" class="article-card group p-12 rounded-[3.5rem] border border-slate-100 cursor-pointer relative overflow-hidden"><div class="flex justify-between gap-12 text-left"><div class="flex-1 min-w-0 text-left">${a.isPinned ? '<span class="inline-block mb-6 bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-xl shadow-lg uppercase tracking-widest">Pinned</span>' : ''}<h4 class="text-xl font-black mb-4 group-hover:text-indigo-600 transition-colors text-balance tracking-tighter leading-tight">${a.title}</h4><p class="text-slate-400 line-clamp-2 text-sm leading-relaxed mb-10 font-medium text-balance">${a.summary}</p><div class="flex items-center gap-8 text-left"><span class="text-slate-300 text-[10px] font-black uppercase tracking-[0.3em]">📅 ${a.date.split(' ')[0]}</span><div class="text-indigo-600 text-xs font-black uppercase tracking-[0.4em] flex items-center group-hover:gap-2 transition-all">VIEW <span class="opacity-0 group-hover:opacity-100 transition-all">→</span></div></div></div>${firstImg ? `<div class="w-36 h-36 md:w-52 md:h-52 shrink-0 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200 border-8 border-white self-center rotate-2 group-hover:rotate-0 transition-transform"><img src="${firstImg}" class="w-full h-full object-cover"></div>` : ''}</div></div>`;
                 }).join('');
-                document.getElementById('admin-table-body').innerHTML = `<div class="p-6 font-bold text-xs uppercase border-b border-slate-50 text-slate-400 text-left">博文列表 (${articles.length})</div>` + articles.map(a => `<div class="flex items-center justify-between p-6 border-t border-slate-50 hover:bg-slate-50 transition text-left"><span class="font-bold text-slate-700 text-sm truncate mr-4 flex items-center gap-2 text-balance text-left">${a.isPinned ? '<span class="text-indigo-600">📌</span>' : ''} ${a.title}</span><div class="space-x-4 shrink-0 flex items-center"><button onclick="window.togglePin('${a.id}', ${!!a.isPinned})" class="text-[10px] font-bold ${a.isPinned ? 'text-slate-400' : 'text-indigo-600'} uppercase">${a.isPinned ? '取消置顶' : '置顶'}</button><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs text-balance">删除</button></div></div>`).join('');
+                document.getElementById('admin-table-body').innerHTML = `<div class="p-10 font-black text-[10px] uppercase tracking-[0.4em] border-b border-slate-50 text-slate-400">Content Stream Manager</div>` + articles.map(a => `<div class="flex items-center justify-between p-10 border-t border-slate-50 hover:bg-slate-50 transition-all"><span class="font-bold text-slate-700 text-sm truncate mr-8">${a.isPinned ? '📌 ' : ''}${a.title}</span><div class="space-x-6 shrink-0 flex items-center"><button onclick="window.togglePin('${a.id}', ${!!a.isPinned})" class="text-[11px] font-black ${a.isPinned ? 'text-slate-300' : 'text-indigo-600'} uppercase tracking-widest">${a.isPinned ? 'Unpin' : 'Pin'}</button><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-black text-[11px] uppercase tracking-widest">Edit</button><button onclick="window.deletePost('${a.id}')" class="text-red-400 font-black text-[11px] uppercase tracking-widest">Delete</button></div></div>`).join('');
                 if (location.hash.includes('article')) updateUIFromHash();
             });
         }
         window.togglePin = async (id, currentPinned) => { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id), { isPinned: !currentPinned }); } catch (e) {} };
 
-        // --- 4. 编辑器与附件 ---
+        // --- 4. 图片系统 ---
         const processImageFile = (file) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
+            const reader = new FileReader(); reader.onload = (event) => {
                 const img = new Image(); img.src = event.target.result;
                 img.onload = () => {
                     const cvs = document.createElement('canvas'); let w = img.width, h = img.height;
@@ -340,7 +433,6 @@
             window.tempMediaMap[placeholder] = typeName === "图片" ? `<img src="${realCode}">` : `<a href="${realCode}" download="${fileName}">附件：${fileName}</a>`;
             const s = textarea.selectionStart, e = textarea.selectionEnd;
             textarea.value = textarea.value.substring(0, s) + placeholder + textarea.value.substring(e);
-            alert(`已生成短标签：${placeholder}`);
         };
         window.openEditor = (id = null) => {
             window.tempMediaMap = {};
@@ -367,35 +459,40 @@
         };
         window.deletePost = id => { if(confirm("确定永久删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
-        // --- 5. 评论与图表逻辑 ---
+        // --- 5. 评论与工具 ---
         function startCommentsListener() { onSnapshot(commentsCol, s => { comments = s.docs.map(d => ({id: d.id, ...d.data()})); if (currentArticleId) renderComments(); }); }
         window.deleteComment = async (id) => { if(confirm("删除评论？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
         function renderComments() {
             const listEl = document.getElementById('comments-list'); if (!listEl) return;
             const filtered = comments.filter(c => c.articleId === currentArticleId).sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis());
-            if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-400 text-center py-4 italic">暂无评论。</p>'; return; }
+            if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-300 text-center py-16 italic font-bold">暂无足迹记录。</p>'; return; }
             listEl.innerHTML = filtered.map(c => {
                 const dateStr = c.timestamp?.toDate().toLocaleString('zh-CN', {year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'});
-                return `<div class="comment-card text-left text-balance"><div class="comment-header text-left"><span class="font-bold text-indigo-600 text-sm truncate mr-4 text-left">${c.name || '访客'}</span><div class="flex items-center gap-1.5 shrink-0 text-left"><span class="text-[10px] text-slate-400 font-bold text-right text-left text-balance">${dateStr}</span>${isAdminAuthenticated || (user && c.uid === user.uid) ? `<button type="button" onclick="window.deleteComment('${c.id}')" class="comment-delete-btn"><svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>` : ''}</div></div><p class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap text-left text-balance">${c.content}</p></div>`;
+                return `<div class="comment-card"><div class="comment-header"><span class="font-black text-slate-800 text-base">${c.name || '访客'}</span><div class="flex items-center gap-4 shrink-0"><span class="text-[10px] text-slate-300 font-black uppercase tracking-[0.2em]">${dateStr}</span>${isAdminAuthenticated || (user && c.uid === user.uid) ? `<button type="button" onclick="window.deleteComment('${c.id}')" class="comment-delete-btn"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>` : ''}</div></div><p class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-medium">${c.content}</p></div>`;
             }).join('');
         }
         window.submitComment = async () => {
             const n = document.getElementById('comment-name').value.trim(), c = document.getElementById('comment-content').value.trim();
-            if (!c) return alert("写点什么吧"); const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
+            if (!c) return alert("内容为空"); const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
             try { await addDoc(commentsCol, { articleId: currentArticleId, name: n || '匿名访客', content: c, timestamp: Timestamp.now(), uid: user.uid }); document.getElementById('comment-content').value = ""; } finally { btn.disabled = false; }
         };
 
+        // --- 6. 复利模拟器 (修复变量引用与点绘制) ---
         const cvs = document.getElementById('compoundCanvas'), cx = cvs.getContext('2d'), tooltip = document.getElementById('chart-tooltip');
         function renderChart() {
-            if (!cvs) return; const w = cvs.width = cvs.parentElement.clientWidth, h = 260; cvs.height = h;
+            if (!cvs) return; const w = cvs.width = cvs.parentElement.clientWidth, chartH = 260; cvs.height = chartH;
             const p = parseFloat(document.getElementById('inputPrincipal').value) || 0, m = parseFloat(document.getElementById('inputMonthly').value) || 0, yrs = parseInt(document.getElementById('yearsInput').value), r = parseInt(document.getElementById('rateInput').value) / 100;
             let currentChartData = [{year: 0, principal: p, wealth: p, interest: 0}]; let cur = p;
-            for(let i = 1; i <= yrs; i++) { cur = cur * (1 + r) + (m * 12); let inv = p + (m * 12 * i); currentChartData.push({ year: i, principal: inv, wealth: cur, interest: Math.max(0, cur - inv) }); }
+            for(let i = 1; i <= yrs; i++) { 
+                cur = cur * (1 + r) + (m * 12); 
+                let inv = p + (m * 12 * i); 
+                currentChartData.push({ year: i, principal: inv, wealth: cur, interest: Math.max(0, cur - inv) }); 
+            }
             const max = currentChartData[currentChartData.length-1].wealth || 1; document.getElementById('finalWealth').innerText = `¥${Math.round(max).toLocaleString()}`;
-            cx.clearRect(0,0,w,h); cx.strokeStyle = '#f1f5f9'; cx.setLineDash([5,5]); for(let i=1;i<5;i++){ cx.beginPath(); cx.moveTo(0,h-(i*h/5)); cx.lineTo(w,h-(i*h/5)); cx.stroke(); }
-            cx.setLineDash([]); cx.beginPath(); cx.moveTo(0,h); currentChartData.forEach(d=>cx.lineTo((d.year/yrs)*w,h-(d.principal/max)*(h-60)-30)); cx.lineTo(w,h); cx.fillStyle='#4f46e5'; cx.globalAlpha=0.8; cx.fill();
-            cx.beginPath(); cx.moveTo(0,h); currentChartData.forEach(d=>cx.lineTo((d.year/yrs)*w,h-(d.wealth/max)*(h-60)-30)); for(let i=currentChartData.length-1; i>=0; i--){ cx.lineTo((currentChartData[i].year/yrs)*w,h-(currentChartData[i].principal/max)*(h-60)-30); } cx.fillStyle='#10b981'; cx.globalAlpha=0.4; cx.fill();
-            cx.beginPath(); cx.strokeStyle='#4f46e5'; cx.lineWidth=3; currentChartData.forEach((d,i)=>{ const x=(d.year/yrs)*w, y=h-(d.wealth/max)*(h-60)-30; if(i===0) cx.moveTo(x,y); else cx.lineTo(x,y); }); cx.stroke();
+            cx.clearRect(0,0,w,chartH); cx.strokeStyle = '#f1f5f9'; cx.lineWidth=1; cx.setLineDash([5,5]); for(let i=1;i<5;i++){ cx.beginPath(); cx.moveTo(0,chartH-(i*chartH/5)); cx.lineTo(w,chartH-(i*chartH/5)); cx.stroke(); }
+            cx.setLineDash([]); cx.beginPath(); cx.moveTo(0,chartH); currentChartData.forEach(d=>cx.lineTo((d.year/yrs)*w,chartH-(d.principal/max)*(chartH-60)-30)); cx.lineTo(w,chartH); cx.fillStyle='rgba(99,102,241,0.5)'; cx.fill();
+            cx.beginPath(); cx.moveTo(0,chartH); currentChartData.forEach(d=>cx.lineTo((d.year/yrs)*w,chartH-(d.wealth/max)*(chartH-60)-30)); for(let i=currentChartData.length-1; i>=0; i--){ cx.lineTo((currentChartData[i].year/yrs)*w,chartH-(currentChartData[i].principal/max)*(chartH-60)-30); } cx.fillStyle='rgba(16,185,129,0.15)'; cx.fill();
+            cx.beginPath(); cx.strokeStyle='#4f46e5'; cx.lineWidth=4; cx.lineCap='round'; cx.lineJoin='round'; currentChartData.forEach((d,i)=>{ const x=(d.year/yrs)*w, y=chartH-(d.wealth/max)*(chartH-60)-30; if(i===0) cx.moveTo(x,y); else cx.lineTo(x,y); }); cx.stroke();
             window.lastData = currentChartData;
         }
 
@@ -404,16 +501,21 @@
             const yr = Math.round((x / cvs.width) * yrs); const d = (window.lastData || []).find(p => p.year === yr);
             if(d) {
                 const max = window.lastData[window.lastData.length-1].wealth; 
-                const px = (d.year/yrs)*cvs.width, py = h - (d.wealth/max)*(h-60)-30;
-                tooltip.classList.remove('hidden'); tooltip.style.left = (px > cvs.width - 150 ? px - 160 : px + 15) + 'px'; tooltip.style.top = (py - 85) + 'px';
-                tooltip.innerHTML = `<div class="font-bold text-indigo-200 border-b border-white/20 pb-1 mb-1">第 ${d.year} 年</div><div class="flex justify-between gap-4"><span>本金:</span><span>¥${Math.round(d.principal).toLocaleString()}</span></div><div class="flex justify-between gap-4 text-emerald-300"><span>利息:</span><span>¥${Math.round(d.interest).toLocaleString()}</span></div><div class="flex justify-between gap-4 border-t border-white/10 mt-1 pt-1 font-bold"><span>总计:</span><span>¥${Math.round(d.wealth).toLocaleString()}</span></div>`;
-                renderChart(); cx.beginPath(); cx.fillStyle = '#4f46e5'; cx.arc(px, py, 6, 0, Math.PI * 2); cx.fill(); cx.strokeStyle = 'white'; cx.lineWidth = 2; cx.stroke();
+                const px = (d.year/yrs)*cvs.width, py = 260 - (d.wealth/max)*(260-60)-30;
+                tooltip.classList.remove('hidden'); tooltip.style.left = (px > cvs.width - 150 ? px - 180 : px + 20) + 'px'; tooltip.style.top = (py - 100) + 'px';
+                tooltip.innerHTML = `
+                    <div class="font-black text-indigo-300 border-b border-white/10 pb-3 mb-4 tracking-[0.2em] text-[10px] uppercase">PROJECTED YEAR ${d.year}</div>
+                    <div class="flex justify-between gap-8 mb-2 font-bold"><span>本金:</span><span>¥${Math.round(d.principal).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-8 mb-2 text-emerald-400 font-bold"><span>利息:</span><span>¥${Math.round(d.interest).toLocaleString()}</span></div>
+                    <div class="flex justify-between gap-8 border-t border-white/10 mt-3 pt-3 text-white font-black text-sm"><span>总计:</span><span>¥${Math.round(d.wealth).toLocaleString()}</span></div>
+                `;
+                renderChart(); cx.beginPath(); cx.fillStyle = '#4f46e5'; cx.arc(px, py, 8, 0, Math.PI * 2); cx.fill(); cx.strokeStyle = 'white'; cx.lineWidth = 3; cx.stroke();
             }
         };
         cvs.onmouseleave = () => { tooltip.classList.add('hidden'); renderChart(); };
         ['yearsInput','rateInput','inputPrincipal','inputMonthly'].forEach(id => document.getElementById(id)?.addEventListener('input', (e) => { const vEl = document.getElementById(id.replace('Input','Val')); if(vEl) vEl.innerText = e.target.value; renderChart(); }));
 
-        // --- 7. 生命周期 ---
+        // --- 7. 系统初始化 ---
         onAuthStateChanged(auth, async (u) => { 
             user = u; 
             if (user) { 
