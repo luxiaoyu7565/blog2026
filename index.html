@@ -55,16 +55,10 @@
     <div id="auth-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
         <div class="bg-white w-full max-w-sm rounded-xl p-8 shadow-xl">
             <h3 class="text-lg font-bold mb-4 text-center">管理员身份验证</h3>
-            <form id="login-form">
-                <div class="space-y-4">
-                    <!-- 修复：文案改为管理员密码 -->
-                    <input type="password" id="admin-password-input" class="w-full p-3 border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500 text-center" placeholder="请输入管理员密码">
-                    <div class="flex gap-2">
-                        <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-md font-bold">确定</button>
-                        <button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-md font-bold">取消</button>
-                    </div>
-                </div>
-            </form>
+            <div class="space-y-4">
+                <p class="text-sm text-slate-500 text-center">请使用管理员 Google 账号登录。权限由 Firebase 安全规则验证。</p>
+                <div class="flex gap-2"><button type="button" onclick="window.loginAdmin()" class="flex-1 bg-indigo-600 text-white py-2 rounded-md font-bold">使用 Google 登录</button><button type="button" onclick="window.closeAuthModal()" class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-md font-bold">取消</button></div>
+            </div>
         </div>
     </div>
 
@@ -232,57 +226,70 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const ADMIN_MASK = "WFlGeHlmMTIzNDU2QA=="; 
-        const PERSIST_KEY = "luxiaoyu_blog_p_v11_responsive_revert_visual"; 
+        // 管理权限由 Firebase Authentication 和 Firestore 安全规则验证，绝不在前端保存密码。
+        const adminProvider = new GoogleAuthProvider();
         const fbConfig = { apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU", authDomain: "blog-6dd2d.firebaseapp.com", projectId: "blog-6dd2d", storageBucket: "blog-6dd2d.firebasestorage.app", messagingSenderId: "232992420063", appId: "1:232992420063:web:4afa71559dbf14ed47f96a", measurementId: "G-JV2BY25CFH" };
         const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const appId = 'blog-6dd2d';
         const articlesCol = collection(db, 'artifacts', appId, 'public', 'data', 'articles');
         const settingsDoc = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
-        const securityCol = collection(db, 'artifacts', appId, 'public', 'data', 'security');
         const commentsCol = collection(db, 'artifacts', appId, 'public', 'data', 'comments');
 
         let isAdminAuthenticated = false, articles = [], comments = [], currentArticleId = null, user = null, securityRecord = null;
         window.tempMediaMap = {};
 
-        async function syncSecurityRecord() { if (!user) return; try { const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'security', user.uid)); securityRecord = snap.exists() ? snap.data() : { failedAttempts: 0, lockoutUntil: 0 }; } catch(e) {} }
-
         // --- 认证 ---
-        window.submitAuth = async (e) => {
-            if (e && e.preventDefault) e.preventDefault();
-            const input = document.getElementById('admin-password-input').value, now = Date.now();
-            await syncSecurityRecord();
-            if (securityRecord?.lockoutUntil > now) return alert(`管理员访问锁定中，请稍后再试。`);
-            if (btoa(input) === ADMIN_MASK) { 
-                isAdminAuthenticated = true; localStorage.setItem(PERSIST_KEY, ADMIN_MASK);
-                await setDoc(doc(securityCol, user.uid), { failedAttempts: 0, lockoutUntil: 0 });
-                window.closeAuthModal(); window.showView('admin');
-            } else {
-                let attempts = (securityRecord?.failedAttempts || 0) + 1;
-                let lockoutTime = attempts >= 5 ? now + (5 * 60 * 1000) : 0;
-                await setDoc(doc(securityCol, user.uid), { failedAttempts: attempts, lockoutUntil: lockoutTime });
-                alert(lockoutTime > 0 ? "多次输入错误，管理员密码锁定 5 分钟。" : `密码错误。还剩 ${5 - attempts} 次尝试机会。`); await syncSecurityRecord();
+        window.loginAdmin = async () => {
+            try {
+                await signInWithPopup(auth, adminProvider);
+                isAdminAuthenticated = true;
+                window.closeAuthModal();
+                window.showView('admin');
+            } catch (error) {
+                console.error('管理员登录失败', error);
+                alert('登录未完成。请使用管理员 Google 账号重试。');
             }
         };
-        window.checkAdminAuth = () => { if (isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) { isAdminAuthenticated = true; window.showView('admin'); } else { const m = document.getElementById('auth-modal'); m.classList.remove('hidden'); m.classList.add('flex'); setTimeout(()=>document.getElementById('admin-password-input')?.focus(), 200); } };
-        window.closeAuthModal = () => { const m = document.getElementById('auth-modal'); m?.classList.add('hidden'); m?.classList.remove('flex'); document.getElementById('admin-password-input').value = ""; };
-        window.logoutAdmin = () => { localStorage.removeItem(PERSIST_KEY); isAdminAuthenticated = false; window.showView('home'); };
+        window.checkAdminAuth = () => {
+            if (isAdminAuthenticated) return window.showView('admin');
+            const modal = document.getElementById('auth-modal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+        window.closeAuthModal = () => { const modal = document.getElementById('auth-modal'); modal?.classList.add('hidden'); modal?.classList.remove('flex'); };
+        window.logoutAdmin = async () => { await signOut(auth); await signInAnonymously(auth); isAdminAuthenticated = false; window.showView('home'); };
+
+        const escapeHTML = (value = '') => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        const safeUrl = (value = '', image = false) => {
+            try { const url = String(value).trim(); if (image && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(url)) return url; const parsed = new URL(url, location.origin); return ['https:', 'http:', 'mailto:'].includes(parsed.protocol) ? parsed.href : ''; } catch { return ''; }
+        };
+        const sanitizeArticleHTML = (html = '') => {
+            const allowed = new Set(['P','BR','STRONG','EM','B','I','U','H1','H2','H3','H4','UL','OL','LI','BLOCKQUOTE','PRE','CODE','A','IMG']);
+            const parsed = new DOMParser().parseFromString(String(html), 'text/html');
+            parsed.body.querySelectorAll('*').forEach(element => {
+                if (!allowed.has(element.tagName)) { element.replaceWith(...element.childNodes); return; }
+                const href = element.getAttribute('href'), source = element.getAttribute('src');
+                [...element.attributes].forEach(attribute => element.removeAttribute(attribute.name));
+                if (element.tagName === 'A') { const safeHref = safeUrl(href); if (safeHref) { element.setAttribute('href', safeHref); element.setAttribute('rel', 'noopener noreferrer'); } else element.replaceWith(...element.childNodes); }
+                if (element.tagName === 'IMG') { const safeSource = safeUrl(source, true); if (safeSource) { element.setAttribute('src', safeSource); element.setAttribute('alt', '文章图片'); } else element.remove(); }
+            });
+            return parsed.body.innerHTML;
+        };
 
         // --- 路由 ---
         window.showView = (v, id = null) => { location.hash = `#/${v}${id ? '/' + id : ''}`; };
         const updateUIFromHash = () => {
             const parts = location.hash.replace(/^#\//, '').split('/');
             const view = parts[0] || 'home', id = parts[1] || null;
-            const isAuth = isAdminAuthenticated || localStorage.getItem(PERSIST_KEY) === ADMIN_MASK;
+            const isAuth = isAdminAuthenticated;
             if ((view === 'admin' || view === 'editor') && !isAuth) { location.hash = '#/home'; window.checkAdminAuth(); return; }
             ['home', 'article', 'admin', 'editor'].forEach(x => document.getElementById(x + '-view')?.classList.add('hidden-view'));
             const target = document.getElementById(view + '-view'); if(target) target.classList.remove('hidden-view');
             if (view === 'article' && id) {
                 currentArticleId = id; const a = articles.find(x => x.id === id);
                 if(a) { 
-                    document.getElementById('article-detail-content').innerHTML = `<h1 class="text-3xl font-bold mb-4">${a.title}</h1><div class="text-slate-400 text-xs mb-8">📅 发布时间：${a.date}</div><div class="content-body text-base leading-relaxed">${a.content}</div>`;
+                    document.getElementById('article-detail-content').innerHTML = `<h1 class="text-3xl font-bold mb-4">${escapeHTML(a.title)}</h1><div class="text-slate-400 text-xs mb-8">📅 发布时间：${escapeHTML(a.date)}</div><div class="content-body text-base leading-relaxed">${sanitizeArticleHTML(a.content)}</div>`;
                     renderComments();
                 }
             } else currentArticleId = null;
@@ -299,7 +306,7 @@
                 document.getElementById('welcome-desc').innerText = d.welcomeDesc || '同步云端中...';
                 const mapping = {'set-site-title':'siteTitle','set-welcome-title':'welcomeTitle','set-welcome-desc':'welcomeDesc','set-contact-link':'contactLink','set-tag1':'tag1','set-tag2':'tag2'};
                 for (let [id, key] of Object.entries(mapping)) { const el = document.getElementById(id); if(el) el.value = d[key] || ''; }
-                const tagsEl = document.getElementById('welcome-tags'); if(tagsEl) tagsEl.innerHTML = `<span class="px-3 py-1 bg-white border border-slate-200 text-indigo-600 text-[10px] font-bold rounded-md shadow-sm">${d.tag1 || '# 2026考研'}</span><span class="px-3 py-1 bg-white border border-slate-200 text-emerald-600 text-[10px] font-bold rounded-md shadow-sm">${d.tag2 || '# 奋斗'}</span>`;
+                const tagsEl = document.getElementById('welcome-tags'); if(tagsEl) tagsEl.innerHTML = `<span class="px-3 py-1 bg-white border border-slate-200 text-indigo-600 text-[10px] font-bold rounded-md shadow-sm">${escapeHTML(d.tag1 || '# 2026考研')}</span><span class="px-3 py-1 bg-white border border-slate-200 text-emerald-600 text-[10px] font-bold rounded-md shadow-sm">${escapeHTML(d.tag2 || '# 奋斗')}</span>`;
                 const contactBtn = document.getElementById('nav-contact-btn'); if(contactBtn) { let url = (d.contactLink || '').trim(); if(url && !url.startsWith('http')) url = 'https://' + url; contactBtn.href = url || '#'; }
             });
         }
@@ -317,9 +324,9 @@
                     return timeB - timeA;
                 });
                 document.getElementById('article-list').innerHTML = articles.map(a => {
-                    const imgMatch = a.content.match(/<img[^>]+src="([^">]+)"/);
-                    const firstImg = imgMatch ? imgMatch[1] : null;
-                    return `<div onclick="window.showView('article', '${a.id}')" class="article-card simple-card p-8 cursor-pointer relative overflow-hidden text-left"><div class="flex flex-col sm:flex-row justify-between gap-6 text-left"><div class="flex-1 min-w-0 text-left">${a.isPinned ? '<span class="inline-block mb-3 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">置顶</span>' : ''}<h4 class="text-xl font-bold mb-2 group-hover:text-indigo-600 transition-colors text-left">${a.title}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed mb-4 text-left">${a.summary}</p><div class="flex items-center gap-6 text-left"><span class="text-slate-400 text-[10px] font-bold">📅 ${a.date.split(' ')[0]}</span><div class="text-indigo-600 text-[10px] font-bold">阅读全文 →</div></div></div>${firstImg ? `<div class="w-full sm:w-32 sm:h-32 h-44 shrink-0 rounded-lg overflow-hidden border border-slate-100"><img src="${firstImg}" class="w-full h-full object-cover"></div>` : ''}</div></div>`;
+                    const imgMatch = a.content.match(/<img[^>]+src="([^">]+)"/i);
+                    const firstImg = imgMatch ? safeUrl(imgMatch[1], true) : '';
+                    return `<div onclick="window.showView('article', '${a.id}')" class="article-card simple-card p-8 cursor-pointer relative overflow-hidden text-left"><div class="flex flex-col sm:flex-row justify-between gap-6 text-left"><div class="flex-1 min-w-0 text-left">${a.isPinned ? '<span class="inline-block mb-3 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">置顶</span>' : ''}<h4 class="text-xl font-bold mb-2 group-hover:text-indigo-600 transition-colors text-left">${escapeHTML(a.title)}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed mb-4 text-left">${escapeHTML(a.summary)}</p><div class="flex items-center gap-6 text-left"><span class="text-slate-400 text-[10px] font-bold">📅 ${escapeHTML((a.date || '').split(' ')[0])}</span><div class="text-indigo-600 text-[10px] font-bold">阅读全文 →</div></div></div>${firstImg ? `<div class="w-full sm:w-32 sm:h-32 h-44 shrink-0 rounded-lg overflow-hidden border border-slate-100"><img src="${escapeHTML(firstImg)}" alt="" class="w-full h-full object-cover"></div>` : ''}</div></div>`;
                 }).join('');
                 document.getElementById('admin-table-body').innerHTML = `<div class="p-4 font-bold text-[10px] uppercase border-b border-slate-100 text-slate-400">博文列表管理</div>` + articles.map(a => `<div class="flex items-center justify-between p-4 border-t border-slate-100 hover:bg-slate-50 transition-all text-sm"><span class="font-bold text-slate-700 truncate mr-6">${a.isPinned ? '📌 ' : ''}${a.title}</span><div class="flex shrink-0 gap-4"><button onclick="window.togglePin('${a.id}', ${!!a.isPinned})" class="text-indigo-600 font-bold text-xs">${a.isPinned ? '取消置顶' : '置顶'}</button><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs">删除</button></div></div>`).join('');
                 if (location.hash.includes('article')) updateUIFromHash();
@@ -381,7 +388,7 @@
             if (filtered.length === 0) { listEl.innerHTML = '<p class="text-slate-400 text-center py-8 italic font-bold">暂无足迹记录。</p>'; return; }
             listEl.innerHTML = filtered.map(c => {
                 const dateStr = c.timestamp?.toDate().toLocaleString('zh-CN', {year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'});
-                return `<div class="p-4 bg-slate-50 rounded-lg border border-slate-100 text-left"><div class="flex justify-between items-start mb-2"><span class="font-bold text-slate-800 text-sm">${c.name || '访客'}</span><div class="flex items-center gap-3"><span class="text-[10px] text-slate-400">${dateStr}</span>${isAdminAuthenticated || (user && c.uid === user.uid) ? `<button onclick="window.deleteComment('${c.id}')" class="text-slate-300 hover:text-red-500"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>` : ''}</div></div><p class="text-slate-600 text-sm">${c.content}</p></div>`;
+                return `<div class="p-4 bg-slate-50 rounded-lg border border-slate-100 text-left"><div class="flex justify-between items-start mb-2"><span class="font-bold text-slate-800 text-sm">${escapeHTML(c.name || '访客')}</span><div class="flex items-center gap-3"><span class="text-[10px] text-slate-400">${dateStr}</span>${isAdminAuthenticated || (user && c.uid === user.uid) ? `<button onclick="window.deleteComment('${c.id}')" class="text-slate-300 hover:text-red-500"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></button>` : ''}</div></div><p class="text-slate-600 text-sm">${escapeHTML(c.content)}</p></div>`;
             }).join('');
         }
         window.deleteComment = async (id) => { if(confirm("删除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
@@ -428,12 +435,10 @@
         ['yearsInput','rateInput','inputPrincipal','inputMonthly'].forEach(id => document.getElementById(id)?.addEventListener('input', (e) => { const vEl = document.getElementById(id.replace('Input','Val')); if(vEl) vEl.innerText = e.target.value; renderChart(); }));
 
         // --- 初始化 ---
-        onAuthStateChanged(auth, async (u) => { user = u; if (user) { startDataListener(); startSettingsListener(); startCommentsListener(); await syncSecurityRecord(); if (localStorage.getItem(PERSIST_KEY) === ADMIN_MASK) isAdminAuthenticated = true; } });
+        onAuthStateChanged(auth, async (u) => { user = u; isAdminAuthenticated = Boolean(u && !u.isAnonymous); if (user) { startDataListener(); startSettingsListener(); startCommentsListener(); } });
         (async () => { try { await signInAnonymously(auth); } catch (e) { console.warn("Firebase Access Restricted"); } })();
 
         window.addEventListener('load', () => { 
-            document.getElementById('login-form')?.addEventListener('submit', window.submitAuth);
-            document.getElementById('admin-password-input')?.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); window.submitAuth(); } });
             document.getElementById('image-upload')?.addEventListener('change', (e)=>processImageFile(e.target.files[0]));
             document.getElementById('post-content')?.addEventListener('paste', (e) => { const items = (e.clipboardData || e.originalEvent.clipboardData).items; for (const item of items) { if (item.type.indexOf('image') !== -1) { e.preventDefault(); processImageFile(item.getAsFile()); } } });
             if (location.hash) updateUIFromHash(); renderChart(); 
