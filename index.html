@@ -226,7 +226,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // 管理权限由 Firebase Authentication 和 Firestore 安全规则验证，绝不在前端保存密码。
@@ -248,8 +248,13 @@
                 window.closeAuthModal();
                 window.showView('admin');
             } catch (error) {
+                // Some browsers block pop-ups; a redirect works reliably there.
+                if (['auth/popup-blocked', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(error.code)) {
+                    await signInWithRedirect(auth, adminProvider);
+                    return;
+                }
                 console.error('管理员登录失败', error);
-                alert('登录未完成。请使用管理员 Google 账号重试。');
+                alert('登录未完成：' + (error.code || '请确认已启用 Google 登录并授权博客域名。'));
             }
         };
         window.checkAdminAuth = () => {
@@ -436,6 +441,9 @@
 
         // --- 初始化 ---
         onAuthStateChanged(auth, async (u) => { user = u; isAdminAuthenticated = Boolean(u && !u.isAnonymous); if (user) { startDataListener(); startSettingsListener(); startCommentsListener(); } });
+        getRedirectResult(auth).catch(error => {
+            if (error.code) alert('登录失败：' + error.code);
+        });
         (async () => { try { await signInAnonymously(auth); } catch (e) { console.warn("Firebase Access Restricted"); } })();
 
         window.addEventListener('load', () => { 
