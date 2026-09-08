@@ -4,7 +4,7 @@ service cloud.firestore {
     // Replace with the Google account you use to administer this blog.
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'YOUR_ADMIN_GOOGLE_EMAIL';
+        && request.auth.token.email == 'luxiaoyu8888@gmail.com';
     }
 
     function validComment() {
