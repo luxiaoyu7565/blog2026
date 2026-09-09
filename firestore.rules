@@ -34,7 +34,15 @@ service cloud.firestore {
     match /artifacts/blog-6dd2d/public/data/comments/{commentId} {
       allow read: if true;
       allow create: if request.auth != null && validComment();
-      allow update, delete: if isAdmin() || (
+      allow update: if isAdmin() || (
+        request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.articleId == resource.data.articleId
+        && request.resource.data.timestamp == resource.data.timestamp
+        && validComment()
+      );
+      allow delete: if isAdmin() || (
         request.auth != null
         && resource.data.uid == request.auth.uid
       );

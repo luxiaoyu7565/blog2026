@@ -94,7 +94,8 @@
                     <h3 class="text-xl font-bold">互动交流</h3>
                     <div class="space-y-4 bg-slate-50 p-6 rounded-lg border border-slate-200">
                         <input type="text" id="comment-name" placeholder="您的称呼" class="w-full md:w-1/2 p-3 border border-slate-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                        <textarea id="comment-content" rows="3" placeholder="写下你的想法..." class="w-full p-3 border border-slate-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <textarea id="comment-content" rows="3" maxlength="2000" placeholder="写下你的想法..." class="w-full p-3 border border-slate-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <input type="text" id="comment-website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden">
                         <button onclick="window.submitComment()" id="comment-submit-btn" class="bg-indigo-600 text-white px-6 py-2 rounded-md font-bold text-sm">发表评论</button>
                     </div>
                     <div id="comments-list" class="space-y-4"></div>
@@ -150,7 +151,7 @@
                         <h3 class="text-xl font-bold">内容工作室</h3>
                         <div class="flex gap-2">
                             <label class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded cursor-pointer">贴图<input type="file" id="image-upload" accept="image/*" class="hidden"></label>
-                            <label class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded cursor-pointer">附件<input type="file" id="file-upload" class="hidden"></label>
+                            <label class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded cursor-pointer">附件<input type="file" id="file-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" class="hidden"></label>
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -228,11 +229,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // 管理权限由 Firebase Authentication 和 Firestore 安全规则验证，绝不在前端保存密码。
         const adminProvider = new GoogleAuthProvider();
         const fbConfig = { apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU", authDomain: "blog-6dd2d.firebaseapp.com", projectId: "blog-6dd2d", storageBucket: "blog-6dd2d.firebasestorage.app", messagingSenderId: "232992420063", appId: "1:232992420063:web:4afa71559dbf14ed47f96a", measurementId: "G-JV2BY25CFH" };
-        const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const appId = 'blog-6dd2d';
+        const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const storage = getStorage(app); const appId = 'blog-6dd2d';
         const articlesCol = collection(db, 'artifacts', appId, 'public', 'data', 'articles');
         const settingsDoc = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
         const commentsCol = collection(db, 'artifacts', appId, 'public', 'data', 'comments');
@@ -282,7 +284,7 @@
                 if (!allowed.has(element.tagName)) { element.replaceWith(...element.childNodes); return; }
                 const href = element.getAttribute('href'), source = element.getAttribute('src');
                 [...element.attributes].forEach(attribute => element.removeAttribute(attribute.name));
-                if (element.tagName === 'A') { const safeHref = safeUrl(href); if (safeHref) { element.setAttribute('href', safeHref); element.setAttribute('rel', 'noopener noreferrer'); } else element.replaceWith(...element.childNodes); }
+                if (element.tagName === 'A') { const safeHref = safeUrl(href); if (safeHref) { element.setAttribute('href', safeHref); element.setAttribute('target', '_blank'); element.setAttribute('rel', 'noopener noreferrer'); } else element.replaceWith(...element.childNodes); }
                 if (element.tagName === 'IMG') { const safeSource = safeUrl(source, true); if (safeSource) { element.setAttribute('src', safeSource); element.setAttribute('alt', '文章图片'); } else element.remove(); }
             });
             return parsed.body.innerHTML;
@@ -361,18 +363,42 @@
         window.deletePost = id => { if(confirm("确定永久删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
         // --- 图片/编辑器 ---
-        const processImageFile = (file) => {
-            const reader = new FileReader(); reader.onload = (event) => {
-                const img = new Image(); img.src = event.target.result;
-                img.onload = () => {
-                    const cvs = document.createElement('canvas'); let w = img.width, h = img.height;
-                    if (w > 1000) { h = (1000 / w) * h; w = 1000; }
-                    cvs.width = w; cvs.height = h;
-                    cvs.getContext('2d').drawImage(img, 0, 0, w, h);
-                    insertPlaceholder(cvs.toDataURL('image/jpeg', 0.7), "图片");
+        const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+        const compressImage = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = reject;
+            reader.onload = event => {
+                const image = new Image();
+                image.onerror = reject;
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scale = Math.min(1, 1000 / image.width);
+                    canvas.width = Math.round(image.width * scale);
+                    canvas.height = Math.round(image.height * scale);
+                    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('图片压缩失败')), 'image/jpeg', 0.7);
                 };
+                image.src = event.target.result;
             };
             reader.readAsDataURL(file);
+        });
+        const uploadMedia = async (file, typeName) => {
+            if (!file) return;
+            if (file.size > MAX_UPLOAD_BYTES) return alert('文件不能超过 10 MB。');
+            if (typeName === '图片' && !file.type.startsWith('image/')) return alert('请选择图片文件。');
+            const uploadFile = typeName === '图片' ? await compressImage(file) : file;
+            const path = `media/${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const task = uploadBytesResumable(ref(storage, path), uploadFile, { contentType: typeName === '图片' ? 'image/jpeg' : (file.type || 'application/octet-stream') });
+            const btn = document.getElementById('post-submit-btn'); btn.disabled = true; btn.innerText = '正在上传 0%';
+            try {
+                await new Promise((resolve, reject) => task.on('state_changed', snapshot => {
+                    btn.innerText = `正在上传 ${Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100)}%`;
+                }, reject, resolve));
+                const url = await getDownloadURL(task.snapshot.ref);
+                insertPlaceholder(url, typeName, file.name);
+            } catch (error) {
+                console.error('上传失败', error); alert('上传失败，请稍后重试。');
+            } finally { btn.disabled = false; btn.innerText = '发布同步'; }
         };
         const insertPlaceholder = (realCode, typeName, fileName = '') => {
             const textarea = document.getElementById('post-content');
@@ -419,11 +445,16 @@
         window.deleteComment = async (id) => { if(confirm("删除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
         window.submitComment = async () => {
             const n = document.getElementById('comment-name').value.trim(), c = document.getElementById('comment-content').value.trim();
-            if (!c || !currentArticleId) return;
+            const website = document.getElementById('comment-website').value.trim();
+            if (!c || !currentArticleId || website) return;
             if (!user) return alert('评论服务正在连接，请稍后重试。');
+            const cooldownKey = 'blog-comment-cooldown';
+            const lastCommentAt = Number(localStorage.getItem(cooldownKey) || 0);
+            if (Date.now() - lastCommentAt < 60_000) return alert('请一分钟后再发表评论。');
             const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
             try {
                 await addDoc(commentsCol, { articleId: currentArticleId, name: n || '访客', content: c, timestamp: Timestamp.now(), uid: user.uid });
+                localStorage.setItem(cooldownKey, String(Date.now()));
                 document.getElementById('comment-content').value = "";
             } catch (error) {
                 console.error('评论提交失败', error);
@@ -478,7 +509,8 @@
         })();
 
         window.addEventListener('load', () => { 
-            document.getElementById('image-upload')?.addEventListener('change', (e)=>processImageFile(e.target.files[0]));
+            document.getElementById('image-upload')?.addEventListener('change', (e)=>uploadMedia(e.target.files[0], '图片'));
+            document.getElementById('file-upload')?.addEventListener('change', (e)=>uploadMedia(e.target.files[0], '附件'));
             document.getElementById('post-content')?.addEventListener('paste', (e) => { const items = (e.clipboardData || e.originalEvent.clipboardData).items; for (const item of items) { if (item.type.indexOf('image') !== -1) { e.preventDefault(); processImageFile(item.getAsFile()); } } });
             if (location.hash) updateUIFromHash(); renderChart(); 
         });
