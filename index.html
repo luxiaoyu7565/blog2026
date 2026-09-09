@@ -267,7 +267,13 @@
 
         const escapeHTML = (value = '') => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
         const safeUrl = (value = '', image = false) => {
-            try { const url = String(value).trim(); if (image && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(url)) return url; const parsed = new URL(url, location.origin); return ['https:', 'http:', 'mailto:'].includes(parsed.protocol) ? parsed.href : ''; } catch { return ''; }
+            try {
+                const url = String(value).trim();
+                if (image && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(url)) return url;
+                const parsed = new URL(url, location.origin);
+                const allowedProtocols = image ? ['https:', 'http:'] : ['https:', 'http:', 'mailto:'];
+                return allowedProtocols.includes(parsed.protocol) ? parsed.href : '';
+            } catch { return ''; }
         };
         const sanitizeArticleHTML = (html = '') => {
             const allowed = new Set(['P','BR','STRONG','EM','B','I','U','H1','H2','H3','H4','UL','OL','LI','BLOCKQUOTE','PRE','CODE','A','IMG']);
@@ -329,12 +335,26 @@
                     return timeB - timeA;
                 });
                 document.getElementById('article-list').innerHTML = articles.map(a => {
-                    const imgMatch = a.content.match(/<img[^>]+src="([^">]+)"/i);
+                    const imgMatch = String(a.content || '').match(/<img[^>]+src="([^">]+)"/i);
                     const firstImg = imgMatch ? safeUrl(imgMatch[1], true) : '';
                     return `<div onclick="window.showView('article', '${a.id}')" class="article-card simple-card p-8 cursor-pointer relative overflow-hidden text-left"><div class="flex flex-col sm:flex-row justify-between gap-6 text-left"><div class="flex-1 min-w-0 text-left">${a.isPinned ? '<span class="inline-block mb-3 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">置顶</span>' : ''}<h4 class="text-xl font-bold mb-2 group-hover:text-indigo-600 transition-colors text-left">${escapeHTML(a.title)}</h4><p class="text-slate-500 line-clamp-2 text-sm leading-relaxed mb-4 text-left">${escapeHTML(a.summary)}</p><div class="flex items-center gap-6 text-left"><span class="text-slate-400 text-[10px] font-bold">📅 ${escapeHTML((a.date || '').split(' ')[0])}</span><div class="text-indigo-600 text-[10px] font-bold">阅读全文 →</div></div></div>${firstImg ? `<div class="w-full sm:w-32 sm:h-32 h-44 shrink-0 rounded-lg overflow-hidden border border-slate-100"><img src="${escapeHTML(firstImg)}" alt="" class="w-full h-full object-cover"></div>` : ''}</div></div>`;
                 }).join('');
-                document.getElementById('admin-table-body').innerHTML = `<div class="p-4 font-bold text-[10px] uppercase border-b border-slate-100 text-slate-400">博文列表管理</div>` + articles.map(a => `<div class="flex items-center justify-between p-4 border-t border-slate-100 hover:bg-slate-50 transition-all text-sm"><span class="font-bold text-slate-700 truncate mr-6">${a.isPinned ? '📌 ' : ''}${a.title}</span><div class="flex shrink-0 gap-4"><button onclick="window.togglePin('${a.id}', ${!!a.isPinned})" class="text-indigo-600 font-bold text-xs">${a.isPinned ? '取消置顶' : '置顶'}</button><button onclick="window.openEditor('${a.id}')" class="text-indigo-600 font-bold text-xs">编辑</button><button onclick="window.deletePost('${a.id}')" class="text-red-500 font-bold text-xs">删除</button></div></div>`).join('');
+                document.getElementById('admin-table-body').innerHTML = `<div class="p-4 font-bold text-[10px] uppercase border-b border-slate-100 text-slate-400">博文列表管理</div>` + articles.map(a => {
+                    const safeId = escapeHTML(a.id);
+                    return `<div class="flex items-center justify-between p-4 border-t border-slate-100 hover:bg-slate-50 transition-all text-sm"><span class="font-bold text-slate-700 truncate mr-6">${a.isPinned ? '📌 ' : ''}${escapeHTML(a.title)}</span><div class="flex shrink-0 gap-4"><button data-action="pin" data-id="${safeId}" data-pinned="${Boolean(a.isPinned)}" class="text-indigo-600 font-bold text-xs">${a.isPinned ? '取消置顶' : '置顶'}</button><button data-action="edit" data-id="${safeId}" class="text-indigo-600 font-bold text-xs">编辑</button><button data-action="delete" data-id="${safeId}" class="text-red-500 font-bold text-xs">删除</button></div></div>`;
+                }).join('');
+                document.querySelectorAll('#admin-table-body button[data-action]').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const { action, id, pinned } = button.dataset;
+                        if (action === 'pin') window.togglePin(id, pinned === 'true');
+                        if (action === 'edit') window.openEditor(id);
+                        if (action === 'delete') window.deletePost(id);
+                    });
+                });
                 if (location.hash.includes('article')) updateUIFromHash();
+            }, error => {
+                console.error('文章加载失败', error);
+                document.getElementById('article-list').innerHTML = '<p class="text-slate-400">文章暂时无法加载，请稍后刷新。</p>';
             });
         }
         window.togglePin = async (id, currentPinned) => { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id), { isPinned: !currentPinned }); } catch (e) {} };
@@ -399,8 +419,16 @@
         window.deleteComment = async (id) => { if(confirm("删除？")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'comments', id)); };
         window.submitComment = async () => {
             const n = document.getElementById('comment-name').value.trim(), c = document.getElementById('comment-content').value.trim();
-            if (!c) return; const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
-            try { await addDoc(commentsCol, { articleId: currentArticleId, name: n || '访客', content: c, timestamp: Timestamp.now(), uid: user.uid }); document.getElementById('comment-content').value = ""; } finally { btn.disabled = false; }
+            if (!c || !currentArticleId) return;
+            if (!user) return alert('评论服务正在连接，请稍后重试。');
+            const btn = document.getElementById('comment-submit-btn'); btn.disabled = true;
+            try {
+                await addDoc(commentsCol, { articleId: currentArticleId, name: n || '访客', content: c, timestamp: Timestamp.now(), uid: user.uid });
+                document.getElementById('comment-content').value = "";
+            } catch (error) {
+                console.error('评论提交失败', error);
+                alert('评论未发送成功，请确认网络连接后重试。');
+            } finally { btn.disabled = false; }
         };
 
         // --- 模拟器 (修复变量引用与点绘制) ---
@@ -444,7 +472,10 @@
         getRedirectResult(auth).catch(error => {
             if (error.code) alert('登录失败：' + error.code);
         });
-        (async () => { try { await signInAnonymously(auth); } catch (e) { console.warn("Firebase Access Restricted"); } })();
+        (async () => {
+            try { await signInAnonymously(auth); }
+            catch (error) { console.warn('Firebase Access Restricted', error); }
+        })();
 
         window.addEventListener('load', () => { 
             document.getElementById('image-upload')?.addEventListener('change', (e)=>processImageFile(e.target.files[0]));
