@@ -151,7 +151,7 @@
                         <h3 class="text-xl font-bold">内容工作室</h3>
                         <div class="flex gap-2">
                             <label class="px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded cursor-pointer">贴图<input type="file" id="image-upload" accept="image/*" class="hidden"></label>
-                            <label class="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded cursor-pointer">附件<input type="file" id="file-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.txt" class="hidden"></label>
+                            
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -229,12 +229,11 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // 管理权限由 Firebase Authentication 和 Firestore 安全规则验证，绝不在前端保存密码。
         const adminProvider = new GoogleAuthProvider();
         const fbConfig = { apiKey: "AIzaSyAVxcXzx1rxI1R6MaUpvwkhsJA5tFCmlKU", authDomain: "blog-6dd2d.firebaseapp.com", projectId: "blog-6dd2d", storageBucket: "blog-6dd2d.firebasestorage.app", messagingSenderId: "232992420063", appId: "1:232992420063:web:4afa71559dbf14ed47f96a", measurementId: "G-JV2BY25CFH" };
-        const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const storage = getStorage(app); const appId = 'blog-6dd2d';
+        const app = initializeApp(fbConfig); const auth = getAuth(app); const db = getFirestore(app); const appId = 'blog-6dd2d';
         const articlesCol = collection(db, 'artifacts', appId, 'public', 'data', 'articles');
         const settingsDoc = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
         const commentsCol = collection(db, 'artifacts', appId, 'public', 'data', 'comments');
@@ -363,42 +362,21 @@
         window.deletePost = id => { if(confirm("确定永久删除博文？")) deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'articles', id)); };
 
         // --- 图片/编辑器 ---
-        const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-        const compressImage = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onerror = reject;
-            reader.onload = event => {
-                const image = new Image();
-                image.onerror = reject;
+        const processImageFile = (file) => {
+            if (!file) return;
+            if (!file.type.startsWith('image/')) return alert('请选择图片文件。');
+            if (file.size > 5 * 1024 * 1024) return alert('图片不能超过 5 MB。');
+            const reader = new FileReader(); reader.onload = event => {
+                const image = new Image(); image.src = event.target.result;
                 image.onload = () => {
                     const canvas = document.createElement('canvas');
                     const scale = Math.min(1, 1000 / image.width);
-                    canvas.width = Math.round(image.width * scale);
-                    canvas.height = Math.round(image.height * scale);
+                    canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale);
                     canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('图片压缩失败')), 'image/jpeg', 0.7);
+                    insertPlaceholder(canvas.toDataURL('image/jpeg', 0.7), '图片');
                 };
-                image.src = event.target.result;
             };
             reader.readAsDataURL(file);
-        });
-        const uploadMedia = async (file, typeName) => {
-            if (!file) return;
-            if (file.size > MAX_UPLOAD_BYTES) return alert('文件不能超过 10 MB。');
-            if (typeName === '图片' && !file.type.startsWith('image/')) return alert('请选择图片文件。');
-            const uploadFile = typeName === '图片' ? await compressImage(file) : file;
-            const path = `media/${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-            const task = uploadBytesResumable(ref(storage, path), uploadFile, { contentType: typeName === '图片' ? 'image/jpeg' : (file.type || 'application/octet-stream') });
-            const btn = document.getElementById('post-submit-btn'); btn.disabled = true; btn.innerText = '正在上传 0%';
-            try {
-                await new Promise((resolve, reject) => task.on('state_changed', snapshot => {
-                    btn.innerText = `正在上传 ${Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100)}%`;
-                }, reject, resolve));
-                const url = await getDownloadURL(task.snapshot.ref);
-                insertPlaceholder(url, typeName, file.name);
-            } catch (error) {
-                console.error('上传失败', error); alert('上传失败，请稍后重试。');
-            } finally { btn.disabled = false; btn.innerText = '发布同步'; }
         };
         const insertPlaceholder = (realCode, typeName, fileName = '') => {
             const textarea = document.getElementById('post-content');
@@ -509,8 +487,7 @@
         })();
 
         window.addEventListener('load', () => { 
-            document.getElementById('image-upload')?.addEventListener('change', (e)=>uploadMedia(e.target.files[0], '图片'));
-            document.getElementById('file-upload')?.addEventListener('change', (e)=>uploadMedia(e.target.files[0], '附件'));
+            document.getElementById('image-upload')?.addEventListener('change', (e)=>processImageFile(e.target.files[0]));
             document.getElementById('post-content')?.addEventListener('paste', (e) => { const items = (e.clipboardData || e.originalEvent.clipboardData).items; for (const item of items) { if (item.type.indexOf('image') !== -1) { e.preventDefault(); processImageFile(item.getAsFile()); } } });
             if (location.hash) updateUIFromHash(); renderChart(); 
         });
