@@ -364,12 +364,31 @@
 
         // --- 图片/编辑器 ---
         const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+        const compressImage = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = reject;
+            reader.onload = event => {
+                const image = new Image();
+                image.onerror = reject;
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scale = Math.min(1, 1000 / image.width);
+                    canvas.width = Math.round(image.width * scale);
+                    canvas.height = Math.round(image.height * scale);
+                    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('图片压缩失败')), 'image/jpeg', 0.7);
+                };
+                image.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
         const uploadMedia = async (file, typeName) => {
             if (!file) return;
             if (file.size > MAX_UPLOAD_BYTES) return alert('文件不能超过 10 MB。');
             if (typeName === '图片' && !file.type.startsWith('image/')) return alert('请选择图片文件。');
+            const uploadFile = typeName === '图片' ? await compressImage(file) : file;
             const path = `media/${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-            const task = uploadBytesResumable(ref(storage, path), file, { contentType: file.type || 'application/octet-stream' });
+            const task = uploadBytesResumable(ref(storage, path), uploadFile, { contentType: typeName === '图片' ? 'image/jpeg' : (file.type || 'application/octet-stream') });
             const btn = document.getElementById('post-submit-btn'); btn.disabled = true; btn.innerText = '正在上传 0%';
             try {
                 await new Promise((resolve, reject) => task.on('state_changed', snapshot => {
