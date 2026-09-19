@@ -25,6 +25,8 @@
         .view-content { transition: opacity 0.2s ease-in-out; }
         
         /* 文章内容显示 */
+        /* 保留编辑器输入的换行、空行和缩进，仅作用于正文。 */
+        #article-detail-content > .content-body { white-space: pre-wrap; overflow-wrap: anywhere; }
         .content-body img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 1.5rem 0; display: block; border: 1px solid #e2e8f0; }
         .content-body a { color: var(--primary); text-decoration: underline; font-weight: 600; }
         
